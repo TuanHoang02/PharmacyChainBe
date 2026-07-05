@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+using PharmacyChainBe.Repositories.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using PharmacyChainBe.DTOs.Request;
 using PharmacyChainBe.DTOs.Response;
@@ -13,20 +13,18 @@ namespace PharmacyChainBe.Services.Implementations
 {
     public class AuthService : IAuthService
     {
-        private readonly AppDbContext _context;
+        private readonly IAuthRepository _authRepository;
         private readonly IConfiguration _configuration;
 
-        public AuthService(AppDbContext context, IConfiguration configuration)
+        public AuthService(IAuthRepository authRepository, IConfiguration configuration)
         {
-            _context = context;
+            _authRepository = authRepository;
             _configuration = configuration;
         }
 
         public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
         {
-            var user = await _context.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Email == request.Email);
+            var user = await _authRepository.GetUserByEmailAsync(request.Email);
 
             if (user == null)
             {
