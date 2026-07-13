@@ -23,5 +23,11 @@ namespace PharmacyChainBe.Controllers
             var response = await _authService.LoginAsync(request);
             return Ok(new BaseApiResponse<AuthResponseDto> { Success = true, Message = "Login successful.", Data = response });
         }
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            return Ok(new BaseApiResponse<object> { Success = true, Message = "Logout successful." });
+        }
     }
 }
