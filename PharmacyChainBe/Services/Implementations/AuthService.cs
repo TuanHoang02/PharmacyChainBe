@@ -62,6 +62,70 @@ namespace PharmacyChainBe.Services.Implementations
             };
         }
 
+        public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request)
+        {
+            var existingUser = await _authRepository.GetUserByEmailAsync(request.Email);
+            if (existingUser != null)
+            {
+                throw new ApiException("Email này đã được sử dụng.", 400);
+            }
+
+            var customerRole = await _authRepository.GetRoleByNameAsync("Customer");
+            if (customerRole == null)
+            {
+                throw new ApiException("Hệ thống chưa được cấu hình vai trò Customer.", 500);
+            }
+
+            var newUser = new User
+            {
+                FullName = request.FullName,
+                Email = request.Email,
+                Phone = request.Phone,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                RoleID = customerRole.RoleID,
+                Status = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _authRepository.AddUserAsync(newUser);
+            newUser.Role = customerRole;
+
+            var token = GenerateJwtToken(newUser);
+
+            return new AuthResponseDto
+            {
+                Token = token,
+                Role = customerRole.RoleName
+            };
+        }
+
+        public async Task<bool> ChangePasswordAsync(int userId, ChangePasswordRequestDto request)
+        {
+            var user = await _authRepository.GetUserByIdAsync(userId);
+            if (user == null)
+            {
+                throw new ApiException("Người dùng không tồn tại.", 404);
+            }
+
+            bool isPasswordValid = false;
+            try
+            {
+                isPasswordValid = BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash);
+            }
+            catch
+            {
+                if (request.CurrentPassword == user.PasswordHash) isPasswordValid = true;
+            }
+
+            if (!isPasswordValid)
+            {
+                throw new ApiException("Mật khẩu hiện tại không chính xác.", 400);
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            return await _authRepository.UpdateUserAsync(user);
+        }
+
         private string GenerateJwtToken(User user)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
