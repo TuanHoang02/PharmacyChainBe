@@ -15,7 +15,7 @@ namespace PharmacyChainBe.Data
                 var roles = new List<Role>
                 {
                     new Role { RoleName = "Admin" },
-                    new Role { RoleName = "Manager" },
+                    new Role { RoleName = "Branch Manager" },
                     new Role { RoleName = "Pharmacist" },
                     new Role { RoleName = "Customer" }
                 };
@@ -85,7 +85,7 @@ namespace PharmacyChainBe.Data
             // Add other Users
             var seedUsers = new List<(string Email, string Name, string Password, string RoleName, string Phone, int? BranchId)>
             {
-                ("manager@gmail.com", "Store Manager", "123456", "Manager", "0987654321", mainBranch?.BranchID),
+                ("branchmanager@gmail.com", "Store Manager", "123456", "Branch Manager", "0987654321", mainBranch?.BranchID),
                 ("pharmacist@gmail.com", "Senior Pharmacist", "123456", "Pharmacist", "0112233445", mainBranch?.BranchID),
                 ("pharmacist2@gmail.com", "Junior Pharmacist", "123456", "Pharmacist", "0223344556", secondBranch?.BranchID),
                 ("customer@gmail.com", "Loyal Customer", "123456", "Customer", "0556677889", null),
