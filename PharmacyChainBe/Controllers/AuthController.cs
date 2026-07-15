@@ -25,13 +25,6 @@ namespace PharmacyChainBe.Controllers
             return Ok(new BaseApiResponse<AuthResponseDto> { Success = true, Message = "Login successful.", Data = response });
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
-        {
-            var response = await _authService.RegisterAsync(request);
-            return Ok(new BaseApiResponse<AuthResponseDto> { Success = true, Message = "Registration successful.", Data = response });
-        }
-
         [HttpPost("logout")]
         public IActionResult Logout()
         {

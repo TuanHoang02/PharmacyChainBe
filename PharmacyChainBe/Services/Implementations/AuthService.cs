@@ -62,43 +62,6 @@ namespace PharmacyChainBe.Services.Implementations
             };
         }
 
-        public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request)
-        {
-            var existingUser = await _authRepository.GetUserByEmailAsync(request.Email);
-            if (existingUser != null)
-            {
-                throw new ApiException("Email này đã được sử dụng.", 400);
-            }
-
-            var customerRole = await _authRepository.GetRoleByNameAsync("Customer");
-            if (customerRole == null)
-            {
-                throw new ApiException("Hệ thống chưa được cấu hình vai trò Customer.", 500);
-            }
-
-            var newUser = new User
-            {
-                FullName = request.FullName,
-                Email = request.Email,
-                Phone = request.Phone,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                RoleID = customerRole.RoleID,
-                Status = true,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            await _authRepository.AddUserAsync(newUser);
-            newUser.Role = customerRole;
-
-            var token = GenerateJwtToken(newUser);
-
-            return new AuthResponseDto
-            {
-                Token = token,
-                Role = customerRole.RoleName
-            };
-        }
-
         public async Task<bool> ChangePasswordAsync(int userId, ChangePasswordRequestDto request)
         {
             var user = await _authRepository.GetUserByIdAsync(userId);
