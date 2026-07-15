@@ -15,12 +15,16 @@ namespace PharmacyChainBe.Models
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Medicine> Medicines => Set<Medicine>();
         public DbSet<Inventory> Inventories => Set<Inventory>();
-        public DbSet<Cart> Carts => Set<Cart>();
-        public DbSet<CartItem> CartItems => Set<CartItem>();
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderDetail> OrderDetails => Set<OrderDetail>();
         public DbSet<Prescription> Prescriptions => Set<Prescription>();
         public DbSet<Payment> Payments => Set<Payment>();
+        public DbSet<Supplier> Suppliers => Set<Supplier>();
+        public DbSet<PurchaseRequest> PurchaseRequests => Set<PurchaseRequest>();
+        public DbSet<PurchaseRequestDetail> PurchaseRequestDetails => Set<PurchaseRequestDetail>();
+        public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+        public DbSet<PurchaseOrderDetail> PurchaseOrderDetails => Set<PurchaseOrderDetail>();
+        public DbSet<MedicineBatch> MedicineBatches => Set<MedicineBatch>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,11 +43,18 @@ namespace PharmacyChainBe.Models
                 .HasForeignKey(u => u.BranchID)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            // User - Supplier
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Supplier)
+                .WithMany(s => s.Users)
+                .HasForeignKey(u => u.SupplierID)
+                .OnDelete(DeleteBehavior.SetNull);
+
             modelBuilder.Entity<Branch>()
-            .HasOne(b => b.CreatedUser)
-            .WithMany()
-            .HasForeignKey(b => b.CreatedBy)
-            .OnDelete(DeleteBehavior.NoAction);
+                .HasOne(b => b.CreatedUser)
+                .WithMany()
+                .HasForeignKey(b => b.CreatedBy)
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Branch>()
                 .HasOne(b => b.UpdatedUser)
@@ -85,13 +96,6 @@ namespace PharmacyChainBe.Models
                 .HasForeignKey(i => i.UpdatedBy)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            // Tránh Multiple Cascade Paths đối với Order
-            modelBuilder.Entity<Order>()
-                .HasOne(o => o.Customer)
-                .WithMany()
-                .HasForeignKey(o => o.CustomerID)
-                .OnDelete(DeleteBehavior.NoAction);
-
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Pharmacist)
                 .WithMany()
@@ -99,16 +103,28 @@ namespace PharmacyChainBe.Models
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Prescription>()
-                .HasOne(p => p.Customer)
-                .WithMany()
-                .HasForeignKey(p => p.CustomerID)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<Prescription>()
                 .HasOne(p => p.Pharmacist)
                 .WithMany()
                 .HasForeignKey(p => p.PharmacistID)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<PurchaseRequest>()
+                .HasOne(pr => pr.RequestedUser)
+                .WithMany()
+                .HasForeignKey(pr => pr.RequestedBy)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PurchaseRequest>()
+                .HasOne(pr => pr.ApprovedUser)
+                .WithMany()
+                .HasForeignKey(pr => pr.ApprovedBy)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PurchaseOrder>()
+                .HasOne(po => po.CreatedUser)
+                .WithMany()
+                .HasForeignKey(po => po.CreatedBy)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

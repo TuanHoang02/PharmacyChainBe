@@ -15,9 +15,10 @@ namespace PharmacyChainBe.Data
                 var roles = new List<Role>
                 {
                     new Role { RoleName = "Admin" },
-                    new Role { RoleName = "Branch Manager" },
+                    new Role { RoleName = "OperationsManager" },
                     new Role { RoleName = "Pharmacist" },
-                    new Role { RoleName = "Customer" }
+                    new Role { RoleName = "BranchManager" },
+                    new Role { RoleName = "Supplier" }
                 };
 
                 await context.Roles.AddRangeAsync(roles);
@@ -79,17 +80,17 @@ namespace PharmacyChainBe.Data
             }
 
             var branchesList = await context.Branches.ToListAsync();
-            var mainBranch = branchesList.FirstOrDefault(b => b.BranchName == "Branch Bình Thạnh");
-            var secondBranch = branchesList.FirstOrDefault(b => b.BranchName == "Branch Thủ Đức");
+            var mainBranch = branchesList.FirstOrDefault(b => b.BranchName == "Cau Giay Branch");
+            var secondBranch = branchesList.FirstOrDefault(b => b.BranchName == "Thanh Xuan Branch");
 
             // Add other Users
             var seedUsers = new List<(string Email, string Name, string Password, string RoleName, string Phone, int? BranchId)>
             {
-                ("branchmanager@gmail.com", "Store Manager", "123456", "Branch Manager", "0987654321", mainBranch?.BranchID),
+                ("branchmanager@gmail.com", "Store Manager", "123456", "BranchManager", "0987654321", mainBranch?.BranchID),
                 ("pharmacist@gmail.com", "Senior Pharmacist", "123456", "Pharmacist", "0112233445", mainBranch?.BranchID),
                 ("pharmacist2@gmail.com", "Junior Pharmacist", "123456", "Pharmacist", "0223344556", secondBranch?.BranchID),
-                ("customer@gmail.com", "Loyal Customer", "123456", "Customer", "0556677889", null),
-                ("customer2@gmail.com", "Regular Customer", "123456", "Customer", "0667788990", null)
+                ("opsmanager@gmail.com", "Operations Manager", "123456", "OperationsManager", "0556677889", null),
+                ("supplieruser@gmail.com", "Supplier Rep", "123456", "Supplier", "0667788990", null)
             };
 
             foreach (var u in seedUsers)

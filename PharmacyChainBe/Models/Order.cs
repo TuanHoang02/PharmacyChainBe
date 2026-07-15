@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PharmacyChainBe.Models
@@ -7,8 +7,6 @@ namespace PharmacyChainBe.Models
     {
         [Key]
         public int OrderID { get; set; }
-
-        public int? CustomerID { get; set; }
 
         public int PharmacistID { get; set; }
 
@@ -22,8 +20,6 @@ namespace PharmacyChainBe.Models
         public decimal TotalAmount { get; set; }
 
         public string OrderStatus { get; set; } = string.Empty;
-
-        public User? Customer { get; set; }
 
         public User? Pharmacist { get; set; }
 

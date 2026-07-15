@@ -66,53 +66,6 @@ namespace PharmacyChainBe.Migrations
                     b.ToTable("Branches");
                 });
 
-            modelBuilder.Entity("PharmacyChainBe.Models.Cart", b =>
-                {
-                    b.Property<int>("CartID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CartID"));
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("CustomerID")
-                        .HasColumnType("int");
-
-                    b.HasKey("CartID");
-
-                    b.HasIndex("CustomerID");
-
-                    b.ToTable("Carts");
-                });
-
-            modelBuilder.Entity("PharmacyChainBe.Models.CartItem", b =>
-                {
-                    b.Property<int>("CartItemID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CartItemID"));
-
-                    b.Property<int>("CartID")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MedicineID")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("CartItemID");
-
-                    b.HasIndex("CartID");
-
-                    b.HasIndex("MedicineID");
-
-                    b.ToTable("CartItems");
-                });
-
             modelBuilder.Entity("PharmacyChainBe.Models.Category", b =>
                 {
                     b.Property<int>("CategoryID")
@@ -172,7 +125,7 @@ namespace PharmacyChainBe.Migrations
                     b.Property<int>("ReorderLevel")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UpdatedBy")
+                    b.Property<int>("UpdatedBy")
                         .HasColumnType("int");
 
                     b.HasKey("InventoryID");
@@ -254,6 +207,45 @@ namespace PharmacyChainBe.Migrations
                     b.ToTable("Medicines");
                 });
 
+            modelBuilder.Entity("PharmacyChainBe.Models.MedicineBatch", b =>
+                {
+                    b.Property<int>("BatchID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BatchID"));
+
+                    b.Property<string>("BatchNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ManufactureDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MedicineID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PurchaseOrderID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ReceivedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("BatchID");
+
+                    b.HasIndex("MedicineID");
+
+                    b.HasIndex("PurchaseOrderID");
+
+                    b.ToTable("MedicineBatches");
+                });
+
             modelBuilder.Entity("PharmacyChainBe.Models.Order", b =>
                 {
                     b.Property<int>("OrderID")
@@ -263,9 +255,6 @@ namespace PharmacyChainBe.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderID"));
 
                     b.Property<int>("BranchID")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("CustomerID")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("OrderDate")
@@ -287,8 +276,6 @@ namespace PharmacyChainBe.Migrations
                     b.HasKey("OrderID");
 
                     b.HasIndex("BranchID");
-
-                    b.HasIndex("CustomerID");
 
                     b.HasIndex("PharmacistID");
 
@@ -370,11 +357,11 @@ namespace PharmacyChainBe.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PrescriptionID"));
 
-                    b.Property<DateTime?>("ApprovedDate")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("CustomerName")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("CustomerID")
-                        .HasColumnType("int");
+                    b.Property<string>("CustomerPhone")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("PharmacistID")
                         .HasColumnType("int");
@@ -383,20 +370,148 @@ namespace PharmacyChainBe.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("UploadDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("PrescriptionID");
 
-                    b.HasIndex("CustomerID");
-
                     b.HasIndex("PharmacistID");
 
                     b.ToTable("Prescriptions");
+                });
+
+            modelBuilder.Entity("PharmacyChainBe.Models.PurchaseOrder", b =>
+                {
+                    b.Property<int>("PurchaseOrderID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PurchaseOrderID"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ExpectedDeliveryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("OrderDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PurchaseRequestID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SupplierID")
+                        .HasColumnType("int");
+
+                    b.HasKey("PurchaseOrderID");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("PurchaseRequestID");
+
+                    b.HasIndex("SupplierID");
+
+                    b.ToTable("PurchaseOrders");
+                });
+
+            modelBuilder.Entity("PharmacyChainBe.Models.PurchaseOrderDetail", b =>
+                {
+                    b.Property<int>("PurchaseOrderDetailID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PurchaseOrderDetailID"));
+
+                    b.Property<int>("MedicineID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PurchaseOrderID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("PurchaseOrderDetailID");
+
+                    b.HasIndex("MedicineID");
+
+                    b.HasIndex("PurchaseOrderID");
+
+                    b.ToTable("PurchaseOrderDetails");
+                });
+
+            modelBuilder.Entity("PharmacyChainBe.Models.PurchaseRequest", b =>
+                {
+                    b.Property<int>("PurchaseRequestID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PurchaseRequestID"));
+
+                    b.Property<int?>("ApprovedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ApprovedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("BranchID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("RequestDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RequestedBy")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("PurchaseRequestID");
+
+                    b.HasIndex("ApprovedBy");
+
+                    b.HasIndex("BranchID");
+
+                    b.HasIndex("RequestedBy");
+
+                    b.ToTable("PurchaseRequests");
+                });
+
+            modelBuilder.Entity("PharmacyChainBe.Models.PurchaseRequestDetail", b =>
+                {
+                    b.Property<int>("PurchaseRequestDetailID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PurchaseRequestDetailID"));
+
+                    b.Property<int>("MedicineID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PurchaseRequestID")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("PurchaseRequestDetailID");
+
+                    b.HasIndex("MedicineID");
+
+                    b.HasIndex("PurchaseRequestID");
+
+                    b.ToTable("PurchaseRequestDetails");
                 });
 
             modelBuilder.Entity("PharmacyChainBe.Models.Role", b =>
@@ -415,6 +530,48 @@ namespace PharmacyChainBe.Migrations
                     b.HasKey("RoleID");
 
                     b.ToTable("Roles");
+                });
+
+            modelBuilder.Entity("PharmacyChainBe.Models.Supplier", b =>
+                {
+                    b.Property<int>("SupplierID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SupplierID"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContactPerson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SupplierName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("SupplierID");
+
+                    b.ToTable("Suppliers");
                 });
 
             modelBuilder.Entity("PharmacyChainBe.Models.User", b =>
@@ -453,6 +610,9 @@ namespace PharmacyChainBe.Migrations
                     b.Property<bool>("Status")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("SupplierID")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -461,6 +621,8 @@ namespace PharmacyChainBe.Migrations
                     b.HasIndex("BranchID");
 
                     b.HasIndex("RoleID");
+
+                    b.HasIndex("SupplierID");
 
                     b.ToTable("Users");
                 });
@@ -481,36 +643,6 @@ namespace PharmacyChainBe.Migrations
                     b.Navigation("CreatedUser");
 
                     b.Navigation("UpdatedUser");
-                });
-
-            modelBuilder.Entity("PharmacyChainBe.Models.Cart", b =>
-                {
-                    b.HasOne("PharmacyChainBe.Models.User", "Customer")
-                        .WithMany("Carts")
-                        .HasForeignKey("CustomerID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-                });
-
-            modelBuilder.Entity("PharmacyChainBe.Models.CartItem", b =>
-                {
-                    b.HasOne("PharmacyChainBe.Models.Cart", "Cart")
-                        .WithMany("CartItems")
-                        .HasForeignKey("CartID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PharmacyChainBe.Models.Medicine", "Medicine")
-                        .WithMany("CartItems")
-                        .HasForeignKey("MedicineID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Cart");
-
-                    b.Navigation("Medicine");
                 });
 
             modelBuilder.Entity("PharmacyChainBe.Models.Category", b =>
@@ -548,7 +680,8 @@ namespace PharmacyChainBe.Migrations
                     b.HasOne("PharmacyChainBe.Models.User", "UpdatedUser")
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.Navigation("Branch");
 
@@ -583,6 +716,25 @@ namespace PharmacyChainBe.Migrations
                     b.Navigation("UpdatedUser");
                 });
 
+            modelBuilder.Entity("PharmacyChainBe.Models.MedicineBatch", b =>
+                {
+                    b.HasOne("PharmacyChainBe.Models.Medicine", "Medicine")
+                        .WithMany()
+                        .HasForeignKey("MedicineID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PharmacyChainBe.Models.PurchaseOrder", "PurchaseOrder")
+                        .WithMany("MedicineBatches")
+                        .HasForeignKey("PurchaseOrderID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Medicine");
+
+                    b.Navigation("PurchaseOrder");
+                });
+
             modelBuilder.Entity("PharmacyChainBe.Models.Order", b =>
                 {
                     b.HasOne("PharmacyChainBe.Models.Branch", "Branch")
@@ -590,11 +742,6 @@ namespace PharmacyChainBe.Migrations
                         .HasForeignKey("BranchID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("PharmacyChainBe.Models.User", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerID")
-                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("PharmacyChainBe.Models.User", "Pharmacist")
                         .WithMany()
@@ -607,8 +754,6 @@ namespace PharmacyChainBe.Migrations
                         .HasForeignKey("PrescriptionID");
 
                     b.Navigation("Branch");
-
-                    b.Navigation("Customer");
 
                     b.Navigation("Pharmacist");
 
@@ -647,20 +792,103 @@ namespace PharmacyChainBe.Migrations
 
             modelBuilder.Entity("PharmacyChainBe.Models.Prescription", b =>
                 {
-                    b.HasOne("PharmacyChainBe.Models.User", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerID")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
                     b.HasOne("PharmacyChainBe.Models.User", "Pharmacist")
                         .WithMany()
                         .HasForeignKey("PharmacistID")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.Navigation("Customer");
-
                     b.Navigation("Pharmacist");
+                });
+
+            modelBuilder.Entity("PharmacyChainBe.Models.PurchaseOrder", b =>
+                {
+                    b.HasOne("PharmacyChainBe.Models.User", "CreatedUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("PharmacyChainBe.Models.PurchaseRequest", "PurchaseRequest")
+                        .WithMany("PurchaseOrders")
+                        .HasForeignKey("PurchaseRequestID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PharmacyChainBe.Models.Supplier", "Supplier")
+                        .WithMany("PurchaseOrders")
+                        .HasForeignKey("SupplierID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedUser");
+
+                    b.Navigation("PurchaseRequest");
+
+                    b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("PharmacyChainBe.Models.PurchaseOrderDetail", b =>
+                {
+                    b.HasOne("PharmacyChainBe.Models.Medicine", "Medicine")
+                        .WithMany()
+                        .HasForeignKey("MedicineID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PharmacyChainBe.Models.PurchaseOrder", "PurchaseOrder")
+                        .WithMany("PurchaseOrderDetails")
+                        .HasForeignKey("PurchaseOrderID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Medicine");
+
+                    b.Navigation("PurchaseOrder");
+                });
+
+            modelBuilder.Entity("PharmacyChainBe.Models.PurchaseRequest", b =>
+                {
+                    b.HasOne("PharmacyChainBe.Models.User", "ApprovedUser")
+                        .WithMany()
+                        .HasForeignKey("ApprovedBy")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("PharmacyChainBe.Models.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PharmacyChainBe.Models.User", "RequestedUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedBy")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("ApprovedUser");
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("RequestedUser");
+                });
+
+            modelBuilder.Entity("PharmacyChainBe.Models.PurchaseRequestDetail", b =>
+                {
+                    b.HasOne("PharmacyChainBe.Models.Medicine", "Medicine")
+                        .WithMany()
+                        .HasForeignKey("MedicineID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PharmacyChainBe.Models.PurchaseRequest", "PurchaseRequest")
+                        .WithMany("PurchaseRequestDetails")
+                        .HasForeignKey("PurchaseRequestID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Medicine");
+
+                    b.Navigation("PurchaseRequest");
                 });
 
             modelBuilder.Entity("PharmacyChainBe.Models.User", b =>
@@ -676,9 +904,16 @@ namespace PharmacyChainBe.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("PharmacyChainBe.Models.Supplier", "Supplier")
+                        .WithMany("Users")
+                        .HasForeignKey("SupplierID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Branch");
 
                     b.Navigation("Role");
+
+                    b.Navigation("Supplier");
                 });
 
             modelBuilder.Entity("PharmacyChainBe.Models.Branch", b =>
@@ -690,11 +925,6 @@ namespace PharmacyChainBe.Migrations
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("PharmacyChainBe.Models.Cart", b =>
-                {
-                    b.Navigation("CartItems");
-                });
-
             modelBuilder.Entity("PharmacyChainBe.Models.Category", b =>
                 {
                     b.Navigation("Medicines");
@@ -702,8 +932,6 @@ namespace PharmacyChainBe.Migrations
 
             modelBuilder.Entity("PharmacyChainBe.Models.Medicine", b =>
                 {
-                    b.Navigation("CartItems");
-
                     b.Navigation("Inventories");
 
                     b.Navigation("OrderDetails");
@@ -716,14 +944,30 @@ namespace PharmacyChainBe.Migrations
                     b.Navigation("Payments");
                 });
 
+            modelBuilder.Entity("PharmacyChainBe.Models.PurchaseOrder", b =>
+                {
+                    b.Navigation("MedicineBatches");
+
+                    b.Navigation("PurchaseOrderDetails");
+                });
+
+            modelBuilder.Entity("PharmacyChainBe.Models.PurchaseRequest", b =>
+                {
+                    b.Navigation("PurchaseOrders");
+
+                    b.Navigation("PurchaseRequestDetails");
+                });
+
             modelBuilder.Entity("PharmacyChainBe.Models.Role", b =>
                 {
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("PharmacyChainBe.Models.User", b =>
+            modelBuilder.Entity("PharmacyChainBe.Models.Supplier", b =>
                 {
-                    b.Navigation("Carts");
+                    b.Navigation("PurchaseOrders");
+
+                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }

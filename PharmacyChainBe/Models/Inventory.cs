@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace PharmacyChainBe.Models
 {
@@ -17,7 +17,7 @@ namespace PharmacyChainBe.Models
 
         public DateTime LastUpdated { get; set; }
 
-        public int? UpdatedBy { get; set; }
+        public int UpdatedBy { get; set; }
 
         public User? UpdatedUser { get; set; }
 

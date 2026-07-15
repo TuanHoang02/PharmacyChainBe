@@ -26,6 +26,9 @@ namespace PharmacyChainBe.Models
         [ForeignKey(nameof(Branch))]
         public int? BranchID { get; set; }
 
+        [ForeignKey(nameof(Supplier))]
+        public int? SupplierID { get; set; }
+
         public bool Status { get; set; }
         public DateTime CreatedAt { get; set; }
 
@@ -35,6 +38,6 @@ namespace PharmacyChainBe.Models
 
         public Branch? Branch { get; set; }
 
-        public ICollection<Cart> Carts { get; set; } = new List<Cart>();
+        public Supplier? Supplier { get; set; }
     }
 }

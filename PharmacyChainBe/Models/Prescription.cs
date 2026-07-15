@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace PharmacyChainBe.Models
 {
@@ -7,7 +7,9 @@ namespace PharmacyChainBe.Models
         [Key]
         public int PrescriptionID { get; set; }
 
-        public int CustomerID { get; set; }
+        public string? CustomerName { get; set; }
+
+        public string? CustomerPhone { get; set; }
 
         public int? PharmacistID { get; set; }
 
@@ -15,10 +17,7 @@ namespace PharmacyChainBe.Models
 
         public DateTime UploadDate { get; set; }
 
-        public string Status { get; set; } = string.Empty;
-        public DateTime? ApprovedDate { get; set; }
 
-        public User? Customer { get; set; }
 
         public User? Pharmacist { get; set; }
     }
