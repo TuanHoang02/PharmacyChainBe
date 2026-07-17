@@ -3,18 +3,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PharmacyChainBe.Models
 {
-    public class PurchaseOrderDetail
+    public class SalesInvoiceDetail
     {
         [Key]
-        public int PurchaseOrderDetailID { get; set; }
+        public int SalesInvoiceDetailID { get; set; }
 
-        public int PurchaseOrderID { get; set; }
+        public int SalesInvoiceID { get; set; }
 
         public int MedicineID { get; set; }
 
-        public int OrderedQuantity { get; set; }
-
-        public int ReceivedQuantity { get; set; }
+        public int Quantity { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal UnitPrice { get; set; }
@@ -23,12 +21,10 @@ namespace PharmacyChainBe.Models
         public decimal LineTotal { get; set; }
 
         // Navigation properties
-        [ForeignKey("PurchaseOrderID")]
-        public PurchaseOrder? PurchaseOrder { get; set; }
+        [ForeignKey("SalesInvoiceID")]
+        public SalesInvoice? SalesInvoice { get; set; }
 
         [ForeignKey("MedicineID")]
         public Medicine? Medicine { get; set; }
-
-        public ICollection<MedicineBatch> MedicineBatches { get; set; } = new List<MedicineBatch>();
     }
 }

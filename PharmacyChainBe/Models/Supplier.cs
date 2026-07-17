@@ -8,27 +8,30 @@ namespace PharmacyChainBe.Models
         public int SupplierID { get; set; }
 
         [Required]
+        [MaxLength(100)]
         public string SupplierName { get; set; } = string.Empty;
 
-        [Required]
-        public string ContactPerson { get; set; } = string.Empty;
+        [MaxLength(100)]
+        public string? ContactName { get; set; }
 
-        [Required]
-        public string Email { get; set; } = string.Empty;
+        [MaxLength(20)]
+        public string? PhoneNumber { get; set; }
 
-        [Required]
-        public string Phone { get; set; } = string.Empty;
+        [MaxLength(100)]
+        public string? Email { get; set; }
 
-        [Required]
-        public string Address { get; set; } = string.Empty;
+        [MaxLength(255)]
+        public string? Address { get; set; }
 
-        public bool Status { get; set; }
+        public bool IsActive { get; set; } = true;
 
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }
 
+        // Navigation properties
         public ICollection<User> Users { get; set; } = new List<User>();
+        public ICollection<MedicineBatch> MedicineBatches { get; set; } = new List<MedicineBatch>();
         public ICollection<PurchaseOrder> PurchaseOrders { get; set; } = new List<PurchaseOrder>();
     }
 }

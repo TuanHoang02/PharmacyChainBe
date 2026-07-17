@@ -24,14 +24,14 @@ namespace PharmacyChainBe.Services.Implementations
 
         public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
         {
-            var user = await _authRepository.GetUserByEmailAsync(request.Email);
+            var user = await _authRepository.GetUserByUsernameAsync(request.Username);
 
             if (user == null)
             {
-                throw new ApiException("Email hoặc mật khẩu không chính xác.", 401);
+                throw new ApiException("Tên đăng nhập hoặc mật khẩu không chính xác.", 401);
             }
 
-            if (!user.Status)
+            if (!user.IsActive)
             {
                  throw new ApiException("Tài khoản đã bị khóa.", 401);
             }
@@ -54,12 +54,66 @@ namespace PharmacyChainBe.Services.Implementations
             }
 
             var token = GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshToken();
+
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await _authRepository.UpdateUserAsync(user);
 
             return new AuthResponseDto 
             { 
                 Token = token,
-                Role = user.Role?.RoleName ?? string.Empty
+                Role = user.Role?.RoleName ?? string.Empty,
+                RefreshToken = refreshToken
             };
+        }
+
+        public async Task<AuthResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request)
+        {
+            var principal = GetPrincipalFromExpiredToken(request.Token);
+            if (principal == null)
+            {
+                throw new ApiException("Token không hợp lệ.", 400);
+            }
+
+            var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                throw new ApiException("Token không hợp lệ.", 400);
+            }
+
+            var user = await _authRepository.GetUserByIdAsync(userId);
+            if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            {
+                throw new ApiException("Refresh Token không hợp lệ hoặc đã hết hạn.", 400);
+            }
+
+            var newJwtToken = GenerateJwtToken(user);
+            var newRefreshToken = GenerateRefreshToken();
+
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await _authRepository.UpdateUserAsync(user);
+
+            return new AuthResponseDto
+            {
+                Token = newJwtToken,
+                Role = user.Role?.RoleName ?? string.Empty,
+                RefreshToken = newRefreshToken
+            };
+        }
+
+        public async Task<bool> LogoutAsync(int userId)
+        {
+            var user = await _authRepository.GetUserByIdAsync(userId);
+            if (user != null)
+            {
+                user.RefreshToken = null;
+                user.RefreshTokenExpiryTime = null;
+                await _authRepository.UpdateUserAsync(user);
+                return true;
+            }
+            return false;
         }
 
         public async Task<bool> ChangePasswordAsync(int userId, ChangePasswordRequestDto request)
@@ -105,7 +159,7 @@ namespace PharmacyChainBe.Services.Implementations
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
                 new Claim(ClaimTypes.Name, user.FullName),
             };
 
@@ -131,6 +185,37 @@ namespace PharmacyChainBe.Services.Implementations
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[64];
+            using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+
+        private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
+        {
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"];
+
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateAudience = false,
+                ValidateIssuer = false,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!)),
+                ValidateLifetime = false // Here we are saying that we don't care about the token's expiration date
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+
+            if (securityToken is not JwtSecurityToken jwtSecurityToken || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                throw new ApiException("Token không hợp lệ.", 400);
+
+            return principal;
         }
     }
 }

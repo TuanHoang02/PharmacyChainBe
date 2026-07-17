@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace PharmacyChainBe.Models
 {
@@ -8,9 +8,9 @@ namespace PharmacyChainBe.Models
         public int RoleID { get; set; }
 
         [Required]
-        [MaxLength(50)]
         public string RoleName { get; set; } = string.Empty;
 
+        // Navigation properties
         public ICollection<User> Users { get; set; } = new List<User>();
     }
 }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PharmacyChainBe.Models
 {
@@ -11,9 +12,15 @@ namespace PharmacyChainBe.Models
 
         public int MedicineID { get; set; }
 
-        public int Quantity { get; set; }
+        public int CurrentStock { get; set; }
 
+        public int RequestedQuantity { get; set; }
+
+        // Navigation properties
+        [ForeignKey("PurchaseRequestID")]
         public PurchaseRequest? PurchaseRequest { get; set; }
+
+        [ForeignKey("MedicineID")]
         public Medicine? Medicine { get; set; }
     }
 }

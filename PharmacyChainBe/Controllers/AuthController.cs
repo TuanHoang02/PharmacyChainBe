@@ -25,9 +25,22 @@ namespace PharmacyChainBe.Controllers
             return Ok(new BaseApiResponse<AuthResponseDto> { Success = true, Message = "Login successful.", Data = response });
         }
 
-        [HttpPost("logout")]
-        public IActionResult Logout()
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
         {
+            var response = await _authService.RefreshTokenAsync(request);
+            return Ok(new BaseApiResponse<AuthResponseDto> { Success = true, Message = "Token refreshed.", Data = response });
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out int userId))
+            {
+                await _authService.LogoutAsync(userId);
+            }
             return Ok(new BaseApiResponse<object> { Success = true, Message = "Logout successful." });
         }
 

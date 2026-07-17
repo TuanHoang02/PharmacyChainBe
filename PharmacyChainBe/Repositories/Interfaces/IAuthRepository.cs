@@ -4,7 +4,7 @@ namespace PharmacyChainBe.Repositories.Interfaces
 {
     public interface IAuthRepository
     {
-        Task<User?> GetUserByEmailAsync(string email);
+        Task<User?> GetUserByUsernameAsync(string username);
         Task<User?> GetUserByIdAsync(int id);
         Task<User> AddUserAsync(User user);
         Task<bool> UpdateUserAsync(User user);

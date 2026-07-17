@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PharmacyChainBe.Models
 {
@@ -15,14 +16,13 @@ namespace PharmacyChainBe.Models
 
         public int ReorderLevel { get; set; }
 
-        public DateTime LastUpdated { get; set; }
+        public DateTime LastUpdatedAt { get; set; } = DateTime.UtcNow;
 
-        public int UpdatedBy { get; set; }
-
-        public User? UpdatedUser { get; set; }
-
+        // Navigation properties
+        [ForeignKey("BranchID")]
         public Branch? Branch { get; set; }
 
+        [ForeignKey("MedicineID")]
         public Medicine? Medicine { get; set; }
     }
 }

@@ -1,4 +1,6 @@
+using PharmacyChainBe.Enums;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PharmacyChainBe.Models
 {
@@ -7,22 +9,38 @@ namespace PharmacyChainBe.Models
         [Key]
         public int PurchaseRequestID { get; set; }
 
+        [Required]
+        [MaxLength(50)]
+        public string RequestCode { get; set; } = string.Empty;
+
         public int BranchID { get; set; }
 
-        public int RequestedBy { get; set; }
+        public int CreatedByUserID { get; set; }
 
-        public DateTime RequestDate { get; set; }
+        public PurchaseRequestStatus Status { get; set; }
 
-        [Required]
-        public string Status { get; set; } = string.Empty;
+        [MaxLength(255)]
+        public string? Reason { get; set; }
 
-        public int? ApprovedBy { get; set; }
+        [MaxLength(255)]
+        public string? ReviewNote { get; set; }
 
-        public DateTime? ApprovedDate { get; set; }
+        public int? ReviewedByUserID { get; set; }
 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? ReviewedAt { get; set; }
+
+        // Navigation properties
+        [ForeignKey("BranchID")]
         public Branch? Branch { get; set; }
-        public User? RequestedUser { get; set; }
-        public User? ApprovedUser { get; set; }
+
+        [ForeignKey("CreatedByUserID")]
+        public User? CreatedByUser { get; set; }
+
+        [ForeignKey("ReviewedByUserID")]
+        public User? ReviewedByUser { get; set; }
+
         public ICollection<PurchaseRequestDetail> PurchaseRequestDetails { get; set; } = new List<PurchaseRequestDetail>();
         public ICollection<PurchaseOrder> PurchaseOrders { get; set; } = new List<PurchaseOrder>();
     }

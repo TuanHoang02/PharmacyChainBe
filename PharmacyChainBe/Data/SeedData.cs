@@ -36,13 +36,14 @@ namespace PharmacyChainBe.Data
                 {
                     adminUser = new User
                     {
+                        Username = "admin",
                         FullName = "System Administrator",
                         Email = "admin@gmail.com",
                         PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-                        Phone = "0123456789",
+                        PhoneNumber = "0123456789",
                         RoleID = adminRole.RoleID,
                         BranchID = null, // Explicitly ensure Admin does not belong to any branch
-                        Status = true,
+                        IsActive = true,
                         CreatedAt = DateTime.UtcNow
                     };
                     await context.Users.AddAsync(adminUser);
@@ -59,19 +60,17 @@ namespace PharmacyChainBe.Data
                     {
                         BranchName = "Cau Giay Branch",
                         Address = "123 Trần Duy Hưng, Phường Yên Hòa, Quận Cầu Giấy, Hà Nội",
-                        Phone = "02437651234",
-                        Status = true,
-                        CreatedAt = DateTime.UtcNow,
-                        CreatedBy = adminUser.UserID
+                        PhoneNumber = "02437651234",
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
                     },
                     new Branch
                     {
                         BranchName = "Thanh Xuan Branch",
                         Address = "88 Nguyễn Trãi, Phường Thanh Xuân Trung, Quận Thanh Xuân, Hà Nội",
-                        Phone = "02435551234",
-                        Status = true,
-                        CreatedAt = DateTime.UtcNow,
-                        CreatedBy = adminUser.UserID
+                        PhoneNumber = "02435551234",
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
                     }
                 };
 
@@ -102,13 +101,14 @@ namespace PharmacyChainBe.Data
                     {
                         var newUser = new User
                         {
+                            Username = u.Email,
                             FullName = u.Name,
                             Email = u.Email,
                             PasswordHash = BCrypt.Net.BCrypt.HashPassword(u.Password),
-                            Phone = u.Phone,
+                            PhoneNumber = u.Phone,
                             RoleID = role.RoleID,
                             BranchID = u.BranchId,
-                            Status = true,
+                            IsActive = true,
                             CreatedAt = DateTime.UtcNow
                         };
                         await context.Users.AddAsync(newUser);

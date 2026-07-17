@@ -9,45 +9,40 @@ namespace PharmacyChainBe.Models
         public int MedicineID { get; set; }
 
         [Required]
+        [MaxLength(100)]
         public string MedicineName { get; set; } = string.Empty;
 
+        [MaxLength(100)]
+        public string? GenericName { get; set; }
+
+        [MaxLength(50)]
+        public string? Unit { get; set; }
+
         [Required]
-        [MaxLength(20)]
-        public string MedicineCode { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal SellingPrice { get; set; }
+
+        [MaxLength(255)]
+        public string? DosageInstructions { get; set; }
+
+        public bool RequiresPrescription { get; set; }
+
+        public bool IsActive { get; set; } = true;
 
         public int CategoryID { get; set; }
 
-        public string? Description { get; set; }
-
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal UnitPrice { get; set; }
-
-        [Required]
-        public string Manufacturer { get; set; } = string.Empty;
-
-        public DateTime ExpiryDate { get; set; }
-
-        public bool PrescriptionRequired { get; set; }
-
-        public string? ImageUrl { get; set; }
-
-        public bool Status { get; set; }
-
-        public DateTime CreatedAt { get; set; }
-
-        public int CreatedBy { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }
 
-        public int? UpdatedBy { get; set; }
-
+        // Navigation properties
+        [ForeignKey("CategoryID")]
         public Category? Category { get; set; }
 
-        public User? CreatedUser { get; set; }
-
-        public User? UpdatedUser { get; set; }
-
         public ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
-        public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+        public ICollection<MedicineBatch> MedicineBatches { get; set; } = new List<MedicineBatch>();
+        public ICollection<SalesInvoiceDetail> SalesInvoiceDetails { get; set; } = new List<SalesInvoiceDetail>();
+        public ICollection<PurchaseRequestDetail> PurchaseRequestDetails { get; set; } = new List<PurchaseRequestDetail>();
+        public ICollection<PurchaseOrderDetail> PurchaseOrderDetails { get; set; } = new List<PurchaseOrderDetail>();
     }
 }
