@@ -26,7 +26,8 @@ namespace PharmacyChainBe.Enums
         Pending,
         Approved,
         Rejected,
-        ConvertedToOrder
+        ConvertedToOrder,
+        Received
     }
 
     public enum OrderStatus
