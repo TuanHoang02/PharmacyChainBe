@@ -20,7 +20,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "BranchManager,Pharmacist")]
+        [Authorize(Roles = "Branch Manager,BranchManager,Pharmacist")]
         public async Task<ActionResult<PagedResponse<List<MedicineDto>>>> GetPaged([FromQuery] MedicineQuery query, CancellationToken cancellationToken)
         {
             var response = await _medicineService.GetPagedAsync(query, cancellationToken);
@@ -28,7 +28,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "BranchManager,Pharmacist")]
+        [Authorize(Roles = "Branch Manager,BranchManager,Pharmacist")]
         public async Task<ActionResult<BaseApiResponse<MedicineDetailDto>>> GetById(int id, CancellationToken cancellationToken)
         {
             var data = await _medicineService.GetByIdAsync(id, cancellationToken);
@@ -41,7 +41,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "BranchManager")]
+        [Authorize(Roles = "Branch Manager,BranchManager")]
         public async Task<ActionResult<BaseApiResponse<MedicineDetailDto>>> Create([FromBody] CreateMedicineRequest request, CancellationToken cancellationToken)
         {
             var data = await _medicineService.CreateAsync(request, cancellationToken);
@@ -54,7 +54,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "BranchManager")]
+        [Authorize(Roles = "Branch Manager,BranchManager")]
         public async Task<ActionResult<BaseApiResponse<MedicineDetailDto>>> Update(int id, [FromBody] UpdateMedicineRequest request, CancellationToken cancellationToken)
         {
             var data = await _medicineService.UpdateAsync(id, request, cancellationToken);
@@ -67,7 +67,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpPatch("{id}/deactivate")]
-        [Authorize(Roles = "BranchManager")]
+        [Authorize(Roles = "Branch Manager,BranchManager")]
         public async Task<ActionResult<BaseApiResponse<object>>> Deactivate(int id, CancellationToken cancellationToken)
         {
             await _medicineService.DeactivateAsync(id, cancellationToken);

@@ -22,5 +22,7 @@ namespace PharmacyChainBe.Services.Interfaces
         Task<SupplierResponseDto> AcceptAsync(int purchaseOrderId, int supplierId);
 
         Task<SupplierResponseDto> RejectAsync(int purchaseOrderId, int supplierId, SupplierResponseRequestDto request);
+
+        Task<PurchaseOrderDetailDto?> UpdateDeliveryStatusAsync(int purchaseOrderId, int supplierId, UpdateDeliveryStatusRequest request);
     }
 }
