@@ -29,6 +29,8 @@ namespace PharmacyChainBe.Services.Implementations
                 QuantityInStock = i.QuantityInStock,
                 ReorderLevel = i.ReorderLevel,
                 IsLowStock = i.QuantityInStock <= i.ReorderLevel,
+                SellingPrice = i.Medicine?.SellingPrice ?? 0,
+                RequiresPrescription = i.Medicine?.RequiresPrescription ?? false,
                 LastUpdatedAt = i.LastUpdatedAt
             });
 

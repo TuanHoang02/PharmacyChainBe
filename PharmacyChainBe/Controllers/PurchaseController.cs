@@ -37,6 +37,20 @@ namespace PharmacyChainBe.Controllers
             return (branchId, userId);
         }
 
+        [HttpGet("requests")]
+        public async Task<IActionResult> GetPurchaseRequests()
+        {
+            var claims = GetUserClaims();
+            var requests = await _purchaseService.GetPurchaseRequestsAsync(claims.BranchId);
+
+            return Ok(new BaseApiResponse<IEnumerable<DTOs.Response.PurchaseRequestResponseDto>>
+            {
+                Success = true,
+                Message = "Lấy danh sách yêu cầu nhập hàng thành công.",
+                Data = requests
+            });
+        }
+
         [HttpPost("request")]
         public async Task<IActionResult> CreatePurchaseRequest([FromBody] CreatePurchaseRequestDto request)
         {
@@ -50,10 +64,10 @@ namespace PharmacyChainBe.Controllers
             });
         }
         [HttpPost("{id}/receive")]
-        public async Task<IActionResult> ReceiveMedicines(int id, [FromBody] ReceiveMedicinesDto request)
+        public async Task<IActionResult> ReceiveMedicines(int id)
         {
             var claims = GetUserClaims();
-            await _purchaseService.ReceiveMedicinesAsync(claims.BranchId, id, request);
+            await _purchaseService.ReceiveMedicinesAsync(claims.BranchId, id);
 
             return Ok(new BaseApiResponse<object> 
             { 

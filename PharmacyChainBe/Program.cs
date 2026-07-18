@@ -60,6 +60,7 @@ builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
 builder.Services.AddScoped<IBranchDashboardService, BranchDashboardService>();
 builder.Services.AddScoped<IBranchReportService, BranchReportService>();
 
+// CORS removed
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
@@ -127,6 +128,8 @@ else
 }
 
 app.UseMiddleware<ExceptionMiddleware>();
+
+// app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();

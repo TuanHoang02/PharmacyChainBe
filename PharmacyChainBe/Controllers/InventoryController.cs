@@ -11,7 +11,7 @@ namespace PharmacyChainBe.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Branch Manager,Administrator")] // Apply BR-02 Role Access
+    [Authorize(Roles = "Branch Manager,Administrator,Pharmacist")] // Apply BR-02 Role Access
     public class InventoryController : ControllerBase
     {
         private readonly IInventoryService _inventoryService;

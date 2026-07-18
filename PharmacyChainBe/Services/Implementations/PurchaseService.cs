@@ -18,6 +18,31 @@ namespace PharmacyChainBe.Services.Implementations
             _inventoryRepository = inventoryRepository;
         }
 
+        public async Task<IEnumerable<DTOs.Response.PurchaseRequestResponseDto>> GetPurchaseRequestsAsync(int branchId)
+        {
+            var requests = await _purchaseRepository.GetPurchaseRequestsByBranchAsync(branchId);
+            return requests.Select(pr => new DTOs.Response.PurchaseRequestResponseDto
+            {
+                PurchaseRequestId = pr.PurchaseRequestID,
+                RequestCode = pr.RequestCode,
+                BranchId = pr.BranchID,
+                CreatedByUserId = pr.CreatedByUserID,
+                Status = pr.Status.ToString(),
+                Reason = pr.Reason,
+                ReviewNote = pr.ReviewNote,
+                CreatedAt = pr.CreatedAt,
+                ReviewedAt = pr.ReviewedAt,
+                Details = pr.PurchaseRequestDetails.Select(prd => new DTOs.Response.PurchaseRequestDetailResponseDto
+                {
+                    PurchaseRequestDetailId = prd.PurchaseRequestDetailID,
+                    MedicineId = prd.MedicineID,
+                    MedicineName = prd.Medicine?.MedicineName ?? "Unknown",
+                    RequestedQuantity = prd.RequestedQuantity,
+                    CurrentStock = prd.CurrentStock
+                }).ToList()
+            });
+        }
+
         public async Task CreatePurchaseRequestAsync(int branchId, int userId, CreatePurchaseRequestDto request)
         {
             if (request.Details == null || !request.Details.Any())
@@ -69,7 +94,7 @@ namespace PharmacyChainBe.Services.Implementations
             await _purchaseRepository.CreatePurchaseRequestAsync(purchaseRequest);
         }
 
-        public async Task ReceiveMedicinesAsync(int branchId, int purchaseRequestId, ReceiveMedicinesDto request)
+        public async Task ReceiveMedicinesAsync(int branchId, int purchaseRequestId)
         {
             var purchaseRequest = await _purchaseRepository.GetPurchaseRequestByIdAsync(purchaseRequestId);
             
@@ -83,48 +108,23 @@ namespace PharmacyChainBe.Services.Implementations
                 throw new ApiException("Only approved purchase requests can be received.", 400); // BR-01, BR-04
             }
 
-            var newBatches = new List<MedicineBatch>();
-
-            foreach (var detailDto in request.Details)
+            var batches = await _purchaseRepository.GetBatchesForPurchaseRequestAsync(purchaseRequestId);
+            
+            // Note: If UC19 hasn't been executed, batches might be empty.
+            // But if it has been executed, we update inventory based on it.
+            foreach (var batch in batches)
             {
-                var prDetail = purchaseRequest.PurchaseRequestDetails.FirstOrDefault(d => d.MedicineID == detailDto.MedicineId);
-                if (prDetail == null)
+                if (batch.ReceivedQuantity > 0)
                 {
-                    throw new ApiException($"Medicine ID {detailDto.MedicineId} is not part of this purchase request.", 400);
+                    await _inventoryRepository.AddStockAsync(
+                        branchId, 
+                        batch.MedicineID, 
+                        batch.ReceivedQuantity
+                    );
                 }
-
-                if (detailDto.ReceivedQuantity <= 0)
-                {
-                    throw new ApiException("Received quantity must be greater than zero.", 400);
-                }
-
-                // 1. Update Inventory (BR-02)
-                await _inventoryRepository.AddStockAsync(
-                    branchId, 
-                    detailDto.MedicineId, 
-                    detailDto.ReceivedQuantity
-                );
-
-                // 2. Create Medicine Batch (BR-03)
-                var batch = new MedicineBatch
-                {
-                    BatchNumber = detailDto.BatchNumber,
-                    MedicineID = detailDto.MedicineId,
-                    BranchID = branchId,
-                    SupplierID = detailDto.SupplierId,
-                    ManufacturingDate = detailDto.ManufacturingDate,
-                    ExpiryDate = detailDto.ExpirationDate,
-                    ReceivedQuantity = detailDto.ReceivedQuantity,
-                    RemainingQuantity = detailDto.ReceivedQuantity,
-                    CreatedAt = DateTime.UtcNow
-                };
-                newBatches.Add(batch);
             }
 
-            // Save batches
-            await _purchaseRepository.AddMedicineBatchesAsync(newBatches);
-
-            // 3. Update Purchase Request Status (POS-01)
+            // Update Purchase Request Status (POS-01)
             purchaseRequest.Status = PurchaseRequestStatus.Received;
             await _purchaseRepository.UpdatePurchaseRequestAsync(purchaseRequest);
         }

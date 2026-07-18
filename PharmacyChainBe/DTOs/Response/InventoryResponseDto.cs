@@ -10,6 +10,8 @@ namespace PharmacyChainBe.DTOs.Response
         public int QuantityInStock { get; set; }
         public int ReorderLevel { get; set; }
         public bool IsLowStock { get; set; }
+        public decimal SellingPrice { get; set; }
+        public bool RequiresPrescription { get; set; }
         public DateTime LastUpdatedAt { get; set; }
     }
 }

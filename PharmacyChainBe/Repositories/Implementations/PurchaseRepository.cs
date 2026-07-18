@@ -37,6 +37,31 @@ namespace PharmacyChainBe.Repositories.Implementations
                 .FirstOrDefaultAsync(pr => pr.PurchaseRequestID == id);
         }
 
+        public async Task<IEnumerable<PurchaseRequest>> GetPurchaseRequestsByBranchAsync(int branchId)
+        {
+            return await _context.PurchaseRequests
+                .Include(pr => pr.PurchaseRequestDetails)
+                    .ThenInclude(prd => prd.Medicine)
+                .Where(pr => pr.BranchID == branchId)
+                .OrderByDescending(pr => pr.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<MedicineBatch>> GetBatchesForPurchaseRequestAsync(int purchaseRequestId)
+        {
+            var purchaseOrder = await _context.PurchaseOrders
+                .Include(po => po.PurchaseOrderDetails)
+                    .ThenInclude(pod => pod.MedicineBatches)
+                .FirstOrDefaultAsync(po => po.PurchaseRequestID == purchaseRequestId);
+
+            if (purchaseOrder == null)
+            {
+                return new List<MedicineBatch>();
+            }
+
+            return purchaseOrder.PurchaseOrderDetails.SelectMany(pod => pod.MedicineBatches).ToList();
+        }
+
         public async Task UpdatePurchaseRequestAsync(PurchaseRequest request)
         {
             _context.PurchaseRequests.Update(request);
