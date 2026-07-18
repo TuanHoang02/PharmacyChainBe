@@ -9,7 +9,7 @@ namespace PharmacyChainBe.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "OperationsManager,BranchManager")]
+    [Authorize(Roles = "OperationsManager,Operations Manager,BranchManager,Branch Manager")]
     public class DashboardController : ControllerBase
     {
         private readonly IDashboardService _dashboardService;

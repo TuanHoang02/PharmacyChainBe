@@ -48,7 +48,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "OperationsManager")]
+        [Authorize(Roles = "OperationsManager,Operations Manager")]
         public async Task<IActionResult> CreateSupplier([FromBody] CreateSupplierDto request)
         {
             var result = await _supplierService.CreateSupplierAsync(request);
@@ -61,7 +61,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "OperationsManager")]
+        [Authorize(Roles = "OperationsManager,Operations Manager")]
         public async Task<IActionResult> UpdateSupplier(int id, [FromBody] UpdateSupplierDto request)
         {
             var result = await _supplierService.UpdateSupplierAsync(id, request);
@@ -74,7 +74,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "OperationsManager")]
+        [Authorize(Roles = "OperationsManager,Operations Manager")]
         public async Task<IActionResult> DeleteSupplier(int id)
         {
             var result = await _supplierService.DeleteSupplierAsync(id);

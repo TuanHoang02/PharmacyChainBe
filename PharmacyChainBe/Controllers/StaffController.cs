@@ -10,7 +10,7 @@ namespace PharmacyChainBe.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "OperationsManager,BranchManager")]
+    [Authorize(Roles = "OperationsManager,Operations Manager,BranchManager,Branch Manager")]
     public class StaffController : ControllerBase
     {
         private readonly IStaffService _staffService;

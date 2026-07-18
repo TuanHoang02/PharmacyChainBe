@@ -48,7 +48,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "OperationsManager")]
+        [Authorize(Roles = "OperationsManager,Operations Manager")]
         public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryDto request)
         {
             var result = await _categoryService.CreateCategoryAsync(request);
@@ -61,7 +61,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "OperationsManager")]
+        [Authorize(Roles = "OperationsManager,Operations Manager")]
         public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCategoryDto request)
         {
             var result = await _categoryService.UpdateCategoryAsync(id, request);
@@ -74,7 +74,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "OperationsManager")]
+        [Authorize(Roles = "OperationsManager,Operations Manager")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
             var result = await _categoryService.DeleteCategoryAsync(id);

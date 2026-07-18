@@ -31,9 +31,9 @@ namespace PharmacyChainBe.Services.Implementations
             if (pageSize <= 0) pageSize = 10;
 
             // Kiểm tra phân quyền: BranchManager chỉ được quản lý chi nhánh của mình
-            if (currentUserRole != "OperationsManager")
+            if (currentUserRole != "OperationsManager" && currentUserRole != "Operations Manager")
             {
-                if (currentUserRole == "BranchManager")
+                if (currentUserRole == "BranchManager" || currentUserRole == "Branch Manager")
                 {
                     branchId = currentUserBranchId; // Bắt buộc lọc theo chi nhánh của Manager
                 }
@@ -65,9 +65,9 @@ namespace PharmacyChainBe.Services.Implementations
             }
 
             // Kiểm tra phân quyền
-            if (currentUserRole != "OperationsManager")
+            if (currentUserRole != "OperationsManager" && currentUserRole != "Operations Manager")
             {
-                if (currentUserRole == "BranchManager")
+                if (currentUserRole == "BranchManager" || currentUserRole == "Branch Manager")
                 {
                     if (user.BranchID != currentUserBranchId)
                     {
@@ -88,9 +88,9 @@ namespace PharmacyChainBe.Services.Implementations
             // Kiểm tra phân quyền khi gán chi nhánh
             int? targetBranchId = request.BranchID;
             
-            if (currentUserRole != "OperationsManager")
+            if (currentUserRole != "OperationsManager" && currentUserRole != "Operations Manager")
             {
-                if (currentUserRole == "BranchManager")
+                if (currentUserRole == "BranchManager" || currentUserRole == "Branch Manager")
                 {
                     targetBranchId = currentUserBranchId; // BranchManager chỉ được tạo nhân viên cho chính chi nhánh của mình
                 }
@@ -108,7 +108,7 @@ namespace PharmacyChainBe.Services.Implementations
             }
 
             // Ngăn chặn BranchManager tạo tài khoản Admin hoặc OperationsManager
-            if (currentUserRole == "BranchManager" && (role.RoleName == "Admin" || role.RoleName == "OperationsManager"))
+            if ((currentUserRole == "BranchManager" || currentUserRole == "Branch Manager") && (role.RoleName == "Admin" || role.RoleName == "Administrator" || role.RoleName == "OperationsManager" || role.RoleName == "Operations Manager"))
             {
                 throw new ApiException("Bạn không được phép gán quyền quản trị cấp cao cho tài khoản mới.", 403);
             }
@@ -168,9 +168,9 @@ namespace PharmacyChainBe.Services.Implementations
             }
 
             // Kiểm tra phân quyền đối với bản ghi cần chỉnh sửa
-            if (currentUserRole != "OperationsManager")
+            if (currentUserRole != "OperationsManager" && currentUserRole != "Operations Manager")
             {
-                if (currentUserRole == "BranchManager")
+                if (currentUserRole == "BranchManager" || currentUserRole == "Branch Manager")
                 {
                     if (user.BranchID != currentUserBranchId)
                     {
@@ -191,9 +191,9 @@ namespace PharmacyChainBe.Services.Implementations
             }
 
             // Ngăn chặn BranchManager thăng cấp thành Admin/OpsManager hoặc hạ cấp bản thân nếu tự sửa
-            if (currentUserRole == "BranchManager")
+            if (currentUserRole == "BranchManager" || currentUserRole == "Branch Manager")
             {
-                if (role.RoleName == "Admin" || role.RoleName == "OperationsManager")
+                if (role.RoleName == "Admin" || role.RoleName == "Administrator" || role.RoleName == "OperationsManager" || role.RoleName == "Operations Manager")
                 {
                     throw new ApiException("Bạn không được phép gán quyền quản trị cấp cao.", 403);
                 }
@@ -201,7 +201,7 @@ namespace PharmacyChainBe.Services.Implementations
 
             // Xác định BranchID đích
             int? targetBranchId = request.BranchID;
-            if (currentUserRole == "BranchManager")
+            if (currentUserRole == "BranchManager" || currentUserRole == "Branch Manager")
             {
                 targetBranchId = currentUserBranchId; // Bắt buộc giữ nguyên chi nhánh của quản lý đó
             }
@@ -248,9 +248,9 @@ namespace PharmacyChainBe.Services.Implementations
             }
 
             // Kiểm tra phân quyền xóa
-            if (currentUserRole != "OperationsManager")
+            if (currentUserRole != "OperationsManager" && currentUserRole != "Operations Manager")
             {
-                if (currentUserRole == "BranchManager")
+                if (currentUserRole == "BranchManager" || currentUserRole == "Branch Manager")
                 {
                     if (user.BranchID != currentUserBranchId)
                     {

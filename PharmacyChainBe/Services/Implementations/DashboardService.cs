@@ -22,9 +22,9 @@ namespace PharmacyChainBe.Services.Implementations
             string currentUserRole)
         {
             // 1. Phân quyền truy cập dữ liệu
-            if (currentUserRole != "OperationsManager")
+            if (currentUserRole != "OperationsManager" && currentUserRole != "Operations Manager")
             {
-                if (currentUserRole == "BranchManager")
+                if (currentUserRole == "BranchManager" || currentUserRole == "Branch Manager")
                 {
                     // BranchManager chỉ được xem chi nhánh của mình, ghi đè tham số branchId
                     branchId = currentUserBranchId;
@@ -57,7 +57,7 @@ namespace PharmacyChainBe.Services.Implementations
             List<BranchPerformanceDto>? branchPerformance = null;
             
             // Chỉ hiển thị so sánh hiệu suất chi nhánh nếu là OpsManager và đang xem toàn chuỗi (branchId == null)
-            if (!branchId.HasValue && currentUserRole == "OperationsManager")
+            if (!branchId.HasValue && (currentUserRole == "OperationsManager" || currentUserRole == "Operations Manager"))
             {
                 branchPerformance = await _dashboardRepository.GetBranchPerformanceAsync(start, end);
             }

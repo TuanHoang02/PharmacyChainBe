@@ -48,7 +48,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "OperationsManager")]
+        [Authorize(Roles = "OperationsManager,Operations Manager")]
         public async Task<IActionResult> CreateBranch([FromBody] CreateBranchDto request)
         {
             var result = await _branchService.CreateBranchAsync(request);
@@ -61,7 +61,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "OperationsManager")]
+        [Authorize(Roles = "OperationsManager,Operations Manager")]
         public async Task<IActionResult> UpdateBranch(int id, [FromBody] UpdateBranchDto request)
         {
             var result = await _branchService.UpdateBranchAsync(id, request);
@@ -74,7 +74,7 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "OperationsManager")]
+        [Authorize(Roles = "OperationsManager,Operations Manager")]
         public async Task<IActionResult> DeleteBranch(int id)
         {
             var result = await _branchService.DeleteBranchAsync(id);
