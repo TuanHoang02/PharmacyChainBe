@@ -118,6 +118,29 @@ namespace PharmacyChainBe.Controllers
             });
         }
 
+        [HttpPatch("{id:int}/delivery-status")]
+        public async Task<IActionResult> UpdateDeliveryStatus(int id, [FromBody] UpdateDeliveryStatusRequest request)
+        {
+            var supplierId = GetSupplierIdFromClaim();
+            if (supplierId == null)
+            {
+                throw new ApiException("Tài khoản không liên kết với nhà cung cấp.", 403);
+            }
+
+            var detail = await _service.UpdateDeliveryStatusAsync(id, supplierId.Value, request);
+            if (detail == null)
+            {
+                throw new ApiException("Không tìm thấy đơn mua.", 404);
+            }
+
+            return Ok(new BaseApiResponse<PurchaseOrderDetailDto>
+            {
+                Success = true,
+                Message = "Cập nhật trạng thái giao hàng thành công.",
+                Data = detail
+            });
+        }
+
         private int? GetSupplierIdFromClaim()
         {
             var supplierClaim = User.FindFirst("SupplierID")?.Value;

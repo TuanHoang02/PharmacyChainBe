@@ -44,14 +44,21 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Add DI for Repositories
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<IMedicineRepository, MedicineRepository>();
+builder.Services.AddScoped<ISalesRepository, SalesRepository>();
 builder.Services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
+builder.Services.AddScoped<IMedicineBatchRepository, MedicineBatchRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPurchaseRequestRepository, PurchaseRequestRepository>();
 
 // Add DI for Services
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IMedicineService, MedicineService>();
+builder.Services.AddScoped<ISalesService, SalesService>();
 builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
+builder.Services.AddScoped<IMedicineBatchService, MedicineBatchService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBranchDashboardService, BranchDashboardService>();
 builder.Services.AddScoped<IBranchReportService, BranchReportService>();
 builder.Services.AddScoped<IPurchaseRequestService, PurchaseRequestService>();
