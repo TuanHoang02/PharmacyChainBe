@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PharmacyChainBe.DTOs;
-using PharmacyChainBe.DTOs.Request;
+using PharmacyChainBe.Enums;
 using PharmacyChainBe.Models;
 using PharmacyChainBe.Repositories.Interfaces;
 
@@ -15,73 +15,90 @@ namespace PharmacyChainBe.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<PagedResponse<List<PurchaseOrder>>> GetPagedAsync(int supplierId, PurchaseOrderQuery query, CancellationToken cancellationToken = default)
+        public async Task<PagedResponse<List<PurchaseOrder>>> GetBySupplierPagedAsync(
+            int supplierId,
+            int pageNumber,
+            int pageSize,
+            string? search,
+            int? branchId,
+            DateTime? startDate,
+            DateTime? endDate,
+            OrderStatus? status)
         {
-            IQueryable<PurchaseOrder> dbQuery = _context.PurchaseOrders.AsNoTracking();
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
 
-            // Filter by SupplierID
-            dbQuery = dbQuery.Where(po => po.SupplierID == supplierId);
-
-            // Filter by OrderStatus
-            if (query.OrderStatus.HasValue)
-            {
-                dbQuery = dbQuery.Where(po => po.OrderStatus == query.OrderStatus.Value);
-            }
-
-            // Filter by DeliveryStatus
-            if (query.DeliveryStatus.HasValue)
-            {
-                dbQuery = dbQuery.Where(po => po.DeliveryStatus == query.DeliveryStatus.Value);
-            }
-
-            // Sorting
-            bool isDesc = query.IsDescending;
-            string sortBy = (query.SortBy ?? string.Empty).Trim().ToLower();
-
-            if (sortBy == "expecteddeliverydate" || sortBy == "expecteddate")
-            {
-                dbQuery = isDesc ? dbQuery.OrderByDescending(po => po.ExpectedDeliveryDate) : dbQuery.OrderBy(po => po.ExpectedDeliveryDate);
-            }
-            else
-            {
-                // Default to CreatedAt descending
-                dbQuery = isDesc ? dbQuery.OrderByDescending(po => po.CreatedAt) : dbQuery.OrderBy(po => po.CreatedAt);
-            }
-
-            int totalRecords = await dbQuery.CountAsync(cancellationToken);
-            int pageNumber = query.PageNumber > 0 ? query.PageNumber : 1;
-            int pageSize = query.PageSize > 0 ? query.PageSize : 10;
-
-            var data = await dbQuery
+            var query = _context.PurchaseOrders
+                .AsNoTracking()
                 .Include(po => po.Branch)
+                .Where(po => po.SupplierID == supplierId);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var trimmed = search.Trim();
+                query = query.Where(po => po.PurchaseOrderCode.Contains(trimmed));
+            }
+
+            if (branchId.HasValue)
+            {
+                query = query.Where(po => po.BranchID == branchId.Value);
+            }
+
+            if (startDate.HasValue)
+            {
+                query = query.Where(po => po.CreatedAt >= startDate.Value);
+            }
+
+            if (endDate.HasValue)
+            {
+                // Include the entire endDate day.
+                var endOfDay = endDate.Value.Date.AddDays(1);
+                query = query.Where(po => po.CreatedAt < endOfDay);
+            }
+
+            if (status.HasValue)
+            {
+                query = query.Where(po => po.OrderStatus == status.Value);
+            }
+
+            var totalRecords = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(po => po.CreatedAt)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync(cancellationToken);
+                .ToListAsync();
 
             return new PagedResponse<List<PurchaseOrder>>
             {
-                Data = data,
+                Data = items,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
                 TotalRecords = totalRecords
             };
         }
 
-        public async Task<PurchaseOrder?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        public async Task<PurchaseOrder?> GetByIdAndSupplierAsync(int purchaseOrderId, int supplierId)
+        {
+            return await _context.PurchaseOrders
+                .AsNoTracking()
+                .Include(po => po.Branch)
+                .Include(po => po.CreatedByUser)
+                .Include(po => po.PurchaseOrderDetails)
+                    .ThenInclude(pod => pod.Medicine)
+                .FirstOrDefaultAsync(po => po.PurchaseOrderID == purchaseOrderId && po.SupplierID == supplierId);
+        }
+
+        public async Task<PurchaseOrder?> GetByIdAndSupplierForUpdateAsync(int purchaseOrderId, int supplierId)
         {
             return await _context.PurchaseOrders
                 .Include(po => po.Branch)
-                .Include(po => po.Supplier)
-                .Include(po => po.PurchaseOrderDetails)
-                    .ThenInclude(pod => pod.Medicine)
-                .FirstOrDefaultAsync(po => po.PurchaseOrderID == id, cancellationToken);
+                .FirstOrDefaultAsync(po => po.PurchaseOrderID == purchaseOrderId && po.SupplierID == supplierId);
         }
 
-        public async Task<bool> UpdateAsync(PurchaseOrder purchaseOrder, CancellationToken cancellationToken = default)
+        public async Task UpdateAsync(PurchaseOrder purchaseOrder)
         {
-            _context.PurchaseOrders.Update(purchaseOrder);
-            var result = await _context.SaveChangesAsync(cancellationToken);
-            return result > 0;
+            await _context.SaveChangesAsync();
         }
     }
 }

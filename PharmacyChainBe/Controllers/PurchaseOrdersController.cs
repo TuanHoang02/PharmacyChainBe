@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using PharmacyChainBe.DTOs;
 using PharmacyChainBe.DTOs.Request;
 using PharmacyChainBe.DTOs.Response;
+using PharmacyChainBe.Enums;
+using PharmacyChainBe.Exceptions;
 using PharmacyChainBe.Services.Interfaces;
-using System.Security.Claims;
 
 namespace PharmacyChainBe.Controllers
 {
@@ -13,60 +14,118 @@ namespace PharmacyChainBe.Controllers
     [Authorize(Roles = "Supplier")]
     public class PurchaseOrdersController : ControllerBase
     {
-        private readonly IPurchaseOrderService _purchaseOrderService;
+        private readonly IPurchaseOrderService _service;
 
-        public PurchaseOrdersController(IPurchaseOrderService purchaseOrderService)
+        public PurchaseOrdersController(IPurchaseOrderService service)
         {
-            _purchaseOrderService = purchaseOrderService;
-        }
-
-        private int GetUserIdOrThrow()
-        {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
-            {
-                throw new UnauthorizedAccessException("Không thể xác thực người dùng.");
-            }
-            return userId;
+            _service = service;
         }
 
         [HttpGet]
-        public async Task<ActionResult<BaseApiResponse<PagedResponse<List<PurchaseOrderDto>>>>> GetPaged([FromQuery] PurchaseOrderQuery query, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetPaged(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? search = null,
+            [FromQuery] int? branchId = null,
+            [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null,
+            [FromQuery] int? status = null)
         {
-            int userId = GetUserIdOrThrow();
-            var data = await _purchaseOrderService.GetPagedAsync(userId, query, cancellationToken);
-            return Ok(new BaseApiResponse<PagedResponse<List<PurchaseOrderDto>>>
+            var supplierId = GetSupplierIdFromClaim();
+            if (supplierId == null)
+            {
+                throw new ApiException("Tài khoản không liên kết với nhà cung cấp.", 403);
+            }
+
+            OrderStatus? statusEnum = null;
+            if (status.HasValue)
+            {
+                if (!Enum.IsDefined(typeof(OrderStatus), status.Value))
+                {
+                    throw new ApiException("Giá trị trạng thái không hợp lệ.", 400);
+                }
+                statusEnum = (OrderStatus)status.Value;
+            }
+
+            var page = await _service.GetPagedAsync(
+                supplierId.Value, pageNumber, pageSize,
+                search, branchId, startDate, endDate, statusEnum);
+
+            return Ok(new BaseApiResponse<PagedResponse<List<PurchaseOrderListItemDto>>>
             {
                 Success = true,
-                Message = "Lấy danh sách đơn đặt hàng thành công.",
-                Data = data
+                Message = "Lấy danh sách đơn mua thành công.",
+                Data = page
             });
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<BaseApiResponse<PurchaseOrderDetailDto>>> GetById(int id, CancellationToken cancellationToken)
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            int userId = GetUserIdOrThrow();
-            var data = await _purchaseOrderService.GetByIdAsync(userId, id, cancellationToken);
+            var supplierId = GetSupplierIdFromClaim();
+            if (supplierId == null)
+            {
+                throw new ApiException("Tài khoản không liên kết với nhà cung cấp.", 403);
+            }
+
+            var detail = await _service.GetDetailAsync(id, supplierId.Value);
+            if (detail == null)
+            {
+                throw new ApiException("Không tìm thấy đơn mua.", 404);
+            }
+
             return Ok(new BaseApiResponse<PurchaseOrderDetailDto>
             {
                 Success = true,
-                Message = "Lấy chi tiết đơn đặt hàng thành công.",
-                Data = data
+                Message = "Lấy chi tiết đơn mua thành công.",
+                Data = detail
             });
         }
 
-        [HttpPatch("{id}/delivery-status")]
-        public async Task<ActionResult<BaseApiResponse<string>>> UpdateDeliveryStatus(int id, [FromBody] UpdateDeliveryStatusRequest request, CancellationToken cancellationToken)
+        [HttpPost("{id:int}/accept")]
+        public async Task<IActionResult> Accept(int id)
         {
-            int userId = GetUserIdOrThrow();
-            await _purchaseOrderService.UpdateDeliveryStatusAsync(userId, id, request, cancellationToken);
-            return Ok(new BaseApiResponse<string>
+            var supplierId = GetSupplierIdFromClaim();
+            if (supplierId == null)
+            {
+                throw new ApiException("Tài khoản không liên kết với nhà cung cấp.", 403);
+            }
+
+            var response = await _service.AcceptAsync(id, supplierId.Value);
+            return Ok(new BaseApiResponse<SupplierResponseDto>
             {
                 Success = true,
-                Message = "Cập nhật trạng thái giao hàng thành công.",
-                Data = "Cập nhật trạng thái giao hàng thành công."
+                Message = "Đơn mua đã được chấp nhận.",
+                Data = response
             });
+        }
+
+        [HttpPost("{id:int}/reject")]
+        public async Task<IActionResult> Reject(int id, [FromBody] SupplierResponseRequestDto request)
+        {
+            var supplierId = GetSupplierIdFromClaim();
+            if (supplierId == null)
+            {
+                throw new ApiException("Tài khoản không liên kết với nhà cung cấp.", 403);
+            }
+
+            var response = await _service.RejectAsync(id, supplierId.Value, request ?? new SupplierResponseRequestDto());
+            return Ok(new BaseApiResponse<SupplierResponseDto>
+            {
+                Success = true,
+                Message = "Đơn mua đã bị từ chối.",
+                Data = response
+            });
+        }
+
+        private int? GetSupplierIdFromClaim()
+        {
+            var supplierClaim = User.FindFirst("SupplierID")?.Value;
+            if (string.IsNullOrEmpty(supplierClaim) || !int.TryParse(supplierClaim, out var id))
+            {
+                return null;
+            }
+            return id;
         }
     }
 }

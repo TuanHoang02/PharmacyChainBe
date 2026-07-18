@@ -1,13 +1,26 @@
 using PharmacyChainBe.DTOs;
 using PharmacyChainBe.DTOs.Request;
 using PharmacyChainBe.DTOs.Response;
+using PharmacyChainBe.Enums;
 
 namespace PharmacyChainBe.Services.Interfaces
 {
     public interface IPurchaseOrderService
     {
-        Task<PagedResponse<List<PurchaseOrderDto>>> GetPagedAsync(int userId, PurchaseOrderQuery query, CancellationToken cancellationToken = default);
-        Task<PurchaseOrderDetailDto> GetByIdAsync(int userId, int id, CancellationToken cancellationToken = default);
-        Task<bool> UpdateDeliveryStatusAsync(int userId, int id, UpdateDeliveryStatusRequest request, CancellationToken cancellationToken = default);
+        Task<PagedResponse<List<PurchaseOrderListItemDto>>> GetPagedAsync(
+            int supplierId,
+            int pageNumber,
+            int pageSize,
+            string? search,
+            int? branchId,
+            DateTime? startDate,
+            DateTime? endDate,
+            OrderStatus? status);
+
+        Task<PurchaseOrderDetailDto?> GetDetailAsync(int purchaseOrderId, int supplierId);
+
+        Task<SupplierResponseDto> AcceptAsync(int purchaseOrderId, int supplierId);
+
+        Task<SupplierResponseDto> RejectAsync(int purchaseOrderId, int supplierId, SupplierResponseRequestDto request);
     }
 }

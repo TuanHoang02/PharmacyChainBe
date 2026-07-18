@@ -11,172 +11,145 @@ namespace PharmacyChainBe.Services.Implementations
 {
     public class PurchaseOrderService : IPurchaseOrderService
     {
-        private readonly IPurchaseOrderRepository _purchaseOrderRepository;
-        private readonly IAuthRepository _authRepository;
+        private readonly IPurchaseOrderRepository _repository;
 
-        public PurchaseOrderService(IPurchaseOrderRepository purchaseOrderRepository, IAuthRepository authRepository)
+        public PurchaseOrderService(IPurchaseOrderRepository repository)
         {
-            _purchaseOrderRepository = purchaseOrderRepository;
-            _authRepository = authRepository;
+            _repository = repository;
         }
 
-        private async Task<int> GetSupplierIdOrThrowAsync(int userId)
+        public async Task<PagedResponse<List<PurchaseOrderListItemDto>>> GetPagedAsync(
+            int supplierId,
+            int pageNumber,
+            int pageSize,
+            string? search,
+            int? branchId,
+            DateTime? startDate,
+            DateTime? endDate,
+            OrderStatus? status)
         {
-            var user = await _authRepository.GetUserByIdAsync(userId);
-            if (user == null || !user.SupplierID.HasValue)
+            if (startDate.HasValue && endDate.HasValue && startDate.Value.Date > endDate.Value.Date)
             {
-                throw new ApiException("Người dùng không thuộc về nhà cung cấp nào.", 403);
+                throw new ApiException("The Start Date cannot be later than the End Date.", 400);
             }
-            return user.SupplierID.Value;
-        }
 
-        public async Task<PagedResponse<List<PurchaseOrderDto>>> GetPagedAsync(int userId, PurchaseOrderQuery query, CancellationToken cancellationToken = default)
-        {
-            int supplierId = await GetSupplierIdOrThrowAsync(userId);
+            var page = await _repository.GetBySupplierPagedAsync(
+                supplierId, pageNumber, pageSize, search, branchId,
+                startDate, endDate, status);
 
-            var paged = await _purchaseOrderRepository.GetPagedAsync(supplierId, query, cancellationToken);
-            var mappedList = paged.Data.Select(MapToDto).ToList();
+            var items = page.Data.Select(MapToListItem).ToList();
 
-            return new PagedResponse<List<PurchaseOrderDto>>
+            return new PagedResponse<List<PurchaseOrderListItemDto>>
             {
-                Data = mappedList,
-                PageNumber = paged.PageNumber,
-                PageSize = paged.PageSize,
-                TotalRecords = paged.TotalRecords
+                Data = items,
+                PageNumber = page.PageNumber,
+                PageSize = page.PageSize,
+                TotalRecords = page.TotalRecords
             };
         }
 
-        public async Task<PurchaseOrderDetailDto> GetByIdAsync(int userId, int id, CancellationToken cancellationToken = default)
+        public async Task<PurchaseOrderDetailDto?> GetDetailAsync(int purchaseOrderId, int supplierId)
         {
-            int supplierId = await GetSupplierIdOrThrowAsync(userId);
-
-            var purchaseOrder = await _purchaseOrderRepository.GetByIdAsync(id, cancellationToken);
-            if (purchaseOrder == null)
-            {
-                throw new ApiException("Không tìm thấy đơn đặt hàng.", 404);
-            }
-
-            if (purchaseOrder.SupplierID != supplierId)
-            {
-                throw new ApiException("Đơn đặt hàng không thuộc về nhà cung cấp này.", 403);
-            }
-
-            return MapToDetailDto(purchaseOrder);
+            var po = await _repository.GetByIdAndSupplierAsync(purchaseOrderId, supplierId);
+            if (po == null) return null;
+            return MapToDetail(po);
         }
 
-        public async Task<bool> UpdateDeliveryStatusAsync(int userId, int id, UpdateDeliveryStatusRequest request, CancellationToken cancellationToken = default)
+        public async Task<SupplierResponseDto> AcceptAsync(int purchaseOrderId, int supplierId)
         {
-            int supplierId = await GetSupplierIdOrThrowAsync(userId);
+            var po = await LoadPendingOrderAsync(purchaseOrderId, supplierId);
+            po.OrderStatus = OrderStatus.Accepted;
+            po.ConfirmedAt = DateTime.UtcNow;
+            po.SupplierResponseNote = null;
+            await _repository.UpdateAsync(po);
+            return MapToResponse(po, null);
+        }
 
-            var purchaseOrder = await _purchaseOrderRepository.GetByIdAsync(id, cancellationToken);
-            if (purchaseOrder == null)
+        public async Task<SupplierResponseDto> RejectAsync(int purchaseOrderId, int supplierId, SupplierResponseRequestDto request)
+        {
+            var reason = request?.RejectionReason?.Trim();
+            if (string.IsNullOrWhiteSpace(reason))
             {
-                throw new ApiException("Không tìm thấy đơn đặt hàng.", 404);
+                throw new ApiException("Vui lòng nhập lý do từ chối.", 400);
+            }
+            if (reason.Length > 255)
+            {
+                throw new ApiException("Lý do từ chối không được vượt quá 255 ký tự.", 400);
             }
 
-            if (purchaseOrder.SupplierID != supplierId)
+            var po = await LoadPendingOrderAsync(purchaseOrderId, supplierId);
+            po.OrderStatus = OrderStatus.Rejected;
+            po.ConfirmedAt = DateTime.UtcNow;
+            po.SupplierResponseNote = reason;
+            await _repository.UpdateAsync(po);
+            return MapToResponse(po, reason);
+        }
+
+        private async Task<PurchaseOrder> LoadPendingOrderAsync(int purchaseOrderId, int supplierId)
+        {
+            var po = await _repository.GetByIdAndSupplierForUpdateAsync(purchaseOrderId, supplierId);
+            if (po == null)
             {
-                throw new ApiException("Đơn đặt hàng không thuộc về nhà cung cấp này.", 403);
+                throw new ApiException("Không tìm thấy đơn mua.", 404);
             }
-
-            if (purchaseOrder.OrderStatus != OrderStatus.Accepted)
+            if (po.OrderStatus != OrderStatus.PendingSupplierConfirmation)
             {
-                throw new ApiException("Đơn đặt hàng chưa được chấp nhận.", 400);
+                throw new ApiException("Đơn mua không ở trạng thái chờ xác nhận.", 409);
             }
+            return po;
+        }
 
-            if (request.DeliveryStatus == DeliveryStatus.Received)
-            {
-                throw new ApiException("Nhà cung cấp không được phép cập nhật trạng thái đã nhận hàng.", 400);
-            }
+        private static SupplierResponseDto MapToResponse(PurchaseOrder po, string? reason) => new()
+        {
+            PurchaseOrderID = po.PurchaseOrderID,
+            OrderStatus = po.OrderStatus.ToString(),
+            ConfirmedAt = po.ConfirmedAt ?? DateTime.UtcNow,
+            RejectionReason = reason
+        };
 
-            // State transition validation (allow same status to update note, but check progress transitions)
-            if (purchaseOrder.DeliveryStatus != request.DeliveryStatus)
-            {
-                bool isValidTransition = false;
+        private static PurchaseOrderListItemDto MapToListItem(PurchaseOrder po) => new()
+        {
+            PurchaseOrderID = po.PurchaseOrderID,
+            PurchaseOrderCode = po.PurchaseOrderCode,
+            BranchID = po.BranchID,
+            BranchName = po.Branch?.BranchName ?? string.Empty,
+            BranchAddress = po.Branch?.Address ?? string.Empty,
+            OrderDate = po.CreatedAt,
+            ExpectedDeliveryDate = po.ExpectedDeliveryDate,
+            TotalAmount = po.TotalAmount,
+            OrderStatus = po.OrderStatus.ToString(),
+            DeliveryStatus = po.DeliveryStatus.ToString()
+        };
 
-                if (purchaseOrder.DeliveryStatus == DeliveryStatus.NotStarted && request.DeliveryStatus == DeliveryStatus.Preparing)
+        private static PurchaseOrderDetailDto MapToDetail(PurchaseOrder po) => new()
+        {
+            PurchaseOrderID = po.PurchaseOrderID,
+            PurchaseOrderCode = po.PurchaseOrderCode,
+            BranchID = po.BranchID,
+            BranchName = po.Branch?.BranchName ?? string.Empty,
+            BranchAddress = po.Branch?.Address ?? string.Empty,
+            BranchPhoneNumber = po.Branch?.PhoneNumber,
+            OrderDate = po.CreatedAt,
+            ExpectedDeliveryDate = po.ExpectedDeliveryDate,
+            ConfirmedAt = po.ConfirmedAt,
+            TotalAmount = po.TotalAmount,
+            OrderStatus = po.OrderStatus.ToString(),
+            DeliveryStatus = po.DeliveryStatus.ToString(),
+            Notes = po.SupplierResponseNote,
+            CreatedByFullName = po.CreatedByUser?.FullName,
+            Items = po.PurchaseOrderDetails
+                .OrderBy(d => d.PurchaseOrderDetailID)
+                .Select(d => new PurchaseOrderItemDto
                 {
-                    isValidTransition = true;
-                }
-                else if (purchaseOrder.DeliveryStatus == DeliveryStatus.Preparing && request.DeliveryStatus == DeliveryStatus.Shipping)
-                {
-                    isValidTransition = true;
-                }
-                else if (purchaseOrder.DeliveryStatus == DeliveryStatus.Shipping && request.DeliveryStatus == DeliveryStatus.Delivered)
-                {
-                    isValidTransition = true;
-                }
-
-                if (!isValidTransition)
-                {
-                    throw new ApiException("Trạng thái giao hàng chuyển đổi không hợp lệ.", 400);
-                }
-            }
-
-            // Set DeliveredAt automatically
-            if (request.DeliveryStatus == DeliveryStatus.Delivered)
-            {
-                purchaseOrder.DeliveredAt ??= DateTime.UtcNow;
-            }
-
-            purchaseOrder.DeliveryStatus = request.DeliveryStatus;
-            purchaseOrder.SupplierResponseNote = request.SupplierResponseNote?.Trim();
-
-            return await _purchaseOrderRepository.UpdateAsync(purchaseOrder, cancellationToken);
-        }
-
-        #region Helper Mappings
-
-        private PurchaseOrderDto MapToDto(PurchaseOrder po)
-        {
-            return new PurchaseOrderDto
-            {
-                PurchaseOrderID = po.PurchaseOrderID,
-                PurchaseOrderCode = po.PurchaseOrderCode,
-                BranchName = po.Branch?.BranchName ?? string.Empty,
-                TotalAmount = po.TotalAmount,
-                OrderStatus = po.OrderStatus,
-                DeliveryStatus = po.DeliveryStatus,
-                CreatedAt = po.CreatedAt,
-                ExpectedDeliveryDate = po.ExpectedDeliveryDate,
-                DeliveredAt = po.DeliveredAt
-            };
-        }
-
-        private PurchaseOrderDetailDto MapToDetailDto(PurchaseOrder po)
-        {
-            return new PurchaseOrderDetailDto
-            {
-                PurchaseOrderID = po.PurchaseOrderID,
-                PurchaseOrderCode = po.PurchaseOrderCode,
-                BranchName = po.Branch?.BranchName ?? string.Empty,
-                SupplierName = po.Supplier?.SupplierName ?? string.Empty,
-                OrderStatus = po.OrderStatus,
-                DeliveryStatus = po.DeliveryStatus,
-                TotalAmount = po.TotalAmount,
-                SupplierResponseNote = po.SupplierResponseNote,
-                CreatedAt = po.CreatedAt,
-                ConfirmedAt = po.ConfirmedAt,
-                ExpectedDeliveryDate = po.ExpectedDeliveryDate,
-                DeliveredAt = po.DeliveredAt,
-                ReceivedAt = po.ReceivedAt,
-                Items = po.PurchaseOrderDetails?.Select(MapToItemDto).ToList() ?? new List<PurchaseOrderItemDto>()
-            };
-        }
-
-        private PurchaseOrderItemDto MapToItemDto(PurchaseOrderDetail pod)
-        {
-            return new PurchaseOrderItemDto
-            {
-                MedicineID = pod.MedicineID,
-                MedicineName = pod.Medicine?.MedicineName ?? string.Empty,
-                OrderedQuantity = pod.OrderedQuantity,
-                ReceivedQuantity = pod.ReceivedQuantity,
-                UnitPrice = pod.UnitPrice,
-                LineTotal = pod.LineTotal
-            };
-        }
-
-        #endregion
+                    PurchaseOrderDetailID = d.PurchaseOrderDetailID,
+                    MedicineID = d.MedicineID,
+                    MedicineName = d.Medicine?.MedicineName ?? string.Empty,
+                    Unit = d.Medicine?.Unit,
+                    OrderedQuantity = d.OrderedQuantity,
+                    UnitPrice = d.UnitPrice,
+                    LineTotal = d.LineTotal
+                })
+                .ToList()
+        };
     }
 }

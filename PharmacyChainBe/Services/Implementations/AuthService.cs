@@ -173,6 +173,11 @@ namespace PharmacyChainBe.Services.Implementations
                 claims.Add(new Claim("BranchID", user.BranchID.Value.ToString()));
             }
 
+            if (user.SupplierID.HasValue)
+            {
+                claims.Add(new Claim("SupplierID", user.SupplierID.Value.ToString()));
+            }
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
