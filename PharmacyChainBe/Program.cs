@@ -44,13 +44,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Add DI for Repositories
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-builder.Services.AddScoped<IBranchPerformanceRepository, BranchPerformanceRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
 
 // Add DI for Services
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IBranchPerformanceService, BranchPerformanceService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
 builder.Services.AddScoped<IBranchDashboardService, BranchDashboardService>();
