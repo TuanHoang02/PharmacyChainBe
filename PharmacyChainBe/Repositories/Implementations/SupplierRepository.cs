@@ -19,7 +19,7 @@ namespace PharmacyChainBe.Repositories.Implementations
             int pageNumber, 
             int pageSize)
         {
-            var query = _context.Suppliers.AsQueryable();
+            var query = _context.Suppliers.Include(s => s.Users).AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
@@ -48,7 +48,7 @@ namespace PharmacyChainBe.Repositories.Implementations
 
         public async Task<Supplier?> GetSupplierByIdAsync(int id)
         {
-            return await _context.Suppliers.FirstOrDefaultAsync(s => s.SupplierID == id);
+            return await _context.Suppliers.Include(s => s.Users).FirstOrDefaultAsync(s => s.SupplierID == id);
         }
 
         public async Task<Supplier> AddSupplierAsync(Supplier supplier)

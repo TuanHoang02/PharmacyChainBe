@@ -60,6 +60,19 @@ namespace PharmacyChainBe.Controllers
             });
         }
 
+        [HttpPost("register")]
+        [Authorize(Roles = "OperationsManager,Operations Manager")]
+        public async Task<IActionResult> CreateSupplierWithUser([FromBody] CreateSupplierWithUserDto request)
+        {
+            var result = await _supplierService.CreateSupplierWithUserAsync(request);
+            return CreatedAtAction(nameof(GetSupplierById), new { id = result.SupplierID }, new BaseApiResponse<SupplierDto>
+            {
+                Success = true,
+                Message = "Tạo nhà cung cấp và tài khoản thành công.",
+                Data = result
+            });
+        }
+
         [HttpPut("{id}")]
         [Authorize(Roles = "OperationsManager,Operations Manager")]
         public async Task<IActionResult> UpdateSupplier(int id, [FromBody] UpdateSupplierDto request)
