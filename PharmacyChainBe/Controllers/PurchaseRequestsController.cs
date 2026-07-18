@@ -13,7 +13,7 @@ namespace PharmacyChainBe.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Operations Manager")]
     public class PurchaseRequestsController : ControllerBase
     {
         private readonly IPurchaseRequestService _purchaseRequestService;
