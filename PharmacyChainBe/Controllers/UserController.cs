@@ -27,7 +27,7 @@ namespace PharmacyChainBe.Controllers
             return Ok(new BaseApiResponse<PagedResponse<IEnumerable<UserResponse>>>
             {
                 Success = true,
-                Message = "Users retrieved successfully.",
+                Message = "Lấy danh sách người dùng thành công.",
                 Data = pagedResponse
             });
         }
@@ -40,7 +40,7 @@ namespace PharmacyChainBe.Controllers
             return Ok(new BaseApiResponse<UserResponse>
             {
                 Success = true,
-                Message = "User created successfully.",
+                Message = "Tạo người dùng thành công.",
                 Data = createdUser
             });
         }
@@ -53,7 +53,7 @@ namespace PharmacyChainBe.Controllers
             return Ok(new BaseApiResponse<UserResponse>
             {
                 Success = true,
-                Message = "User updated successfully.",
+                Message = "Cập nhật người dùng thành công.",
                 Data = updatedUser
             });
         }
@@ -68,7 +68,7 @@ namespace PharmacyChainBe.Controllers
                 return Ok(new BaseApiResponse<object>
                 {
                     Success = true,
-                    Message = "User deactivated successfully.",
+                    Message = "Vô hiệu hoá người dùng thành công.",
                     Data = null!
                 });
             }
@@ -76,7 +76,7 @@ namespace PharmacyChainBe.Controllers
             return BadRequest(new BaseApiResponse<object>
             {
                 Success = false,
-                Message = "Failed to deactivate user.",
+                Message = "Vô hiệu hoá người dùng thất bại.",
                 Data = null!
             });
         }
@@ -88,7 +88,7 @@ namespace PharmacyChainBe.Controllers
             return Ok(new BaseApiResponse<IEnumerable<LookupDto>>
             {
                 Success = true,
-                Message = "Roles retrieved successfully.",
+                Message = "Lấy danh sách vai trò thành công.",
                 Data = roles
             });
         }
@@ -100,7 +100,7 @@ namespace PharmacyChainBe.Controllers
             return Ok(new BaseApiResponse<IEnumerable<LookupDto>>
             {
                 Success = true,
-                Message = "Branches retrieved successfully.",
+                Message = "Lấy danh sách chi nhánh thành công.",
                 Data = branches
             });
         }

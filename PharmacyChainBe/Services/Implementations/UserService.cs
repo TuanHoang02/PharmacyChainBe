@@ -48,7 +48,7 @@ namespace PharmacyChainBe.Services.Implementations
 
             if (string.IsNullOrEmpty(request.Password))
             {
-                throw new ApiException("Password is required for new users.", 400);
+                throw new ApiException("Mật khẩu là bắt buộc đối với người dùng mới.", 400);
             }
 
             var user = new User
@@ -77,7 +77,7 @@ namespace PharmacyChainBe.Services.Implementations
             var existingUser = await _userRepository.GetByIdAsync(id);
             if (existingUser == null)
             {
-                throw new ApiException("User not found.", 404);
+                throw new ApiException("Không tìm thấy người dùng.", 404);
             }
 
             await ValidateDuplicateAsync(request.Username, request.Email, request.PhoneNumber, id);
@@ -106,7 +106,7 @@ namespace PharmacyChainBe.Services.Implementations
             var existingUser = await _userRepository.GetByIdAsync(id);
             if (existingUser == null)
             {
-                throw new ApiException("User not found.", 404);
+                throw new ApiException("Không tìm thấy người dùng.", 404);
             }
 
             existingUser.IsActive = false;
@@ -120,7 +120,7 @@ namespace PharmacyChainBe.Services.Implementations
             var userByUsername = await _userRepository.GetByUsernameAsync(username);
             if (userByUsername != null && (!currentUserId.HasValue || userByUsername.UserID != currentUserId.Value))
             {
-                throw new ApiException("This Username is already registered to another account.", 409);
+                throw new ApiException("Tên đăng nhập này đã được đăng ký cho một tài khoản khác.", 409);
             }
 
             if (!string.IsNullOrEmpty(email))
@@ -128,7 +128,7 @@ namespace PharmacyChainBe.Services.Implementations
                 var userByEmail = await _userRepository.GetByEmailAsync(email);
                 if (userByEmail != null && (!currentUserId.HasValue || userByEmail.UserID != currentUserId.Value))
                 {
-                    throw new ApiException("This Email is already registered to another account.", 409);
+                    throw new ApiException("Email này đã được đăng ký cho một tài khoản khác.", 409);
                 }
             }
 
@@ -137,7 +137,7 @@ namespace PharmacyChainBe.Services.Implementations
                 var userByPhone = await _userRepository.GetByPhoneAsync(phone);
                 if (userByPhone != null && (!currentUserId.HasValue || userByPhone.UserID != currentUserId.Value))
                 {
-                    throw new ApiException("This Phone Number is already registered to another account.", 409);
+                    throw new ApiException("Số điện thoại này đã được đăng ký cho một tài khoản khác.", 409);
                 }
             }
         }
