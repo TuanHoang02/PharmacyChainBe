@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PharmacyChainBe.Models;
 using PharmacyChainBe.DTOs.Response;
 using PharmacyChainBe.Services.Interfaces;
+using PharmacyChainBe.Repositories.Interfaces;
 using System.Globalization;
 
 namespace PharmacyChainBe.Services.Implementations
@@ -140,7 +141,7 @@ namespace PharmacyChainBe.Services.Implementations
             var expiredByBranch = new List<ExpiredMedicineByBranchResponse>();
             var turnoverByBranch = new List<InventoryTurnoverByBranchResponse>();
 
-            int rank = 1;
+
             foreach (var branch in branches)
             {
                 var branchSales = branchSalesDict.ContainsKey(branch.BranchID) ? branchSalesDict[branch.BranchID] : 0;

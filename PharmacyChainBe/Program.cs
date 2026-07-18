@@ -45,10 +45,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Add DI for Repositories
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IBranchPerformanceRepository, BranchPerformanceRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Add DI for Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IBranchPerformanceService, BranchPerformanceService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

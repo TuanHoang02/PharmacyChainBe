@@ -70,7 +70,7 @@ namespace PharmacyChainBe.Repositories.Implementations
                 .Select(g => new { BranchId = g.Key, Total = g.Sum(x => x.TotalAmount) })
                 .ToListAsync();
 
-            return grouped.ToDictionary(g => g.BranchId ?? 0, g => g.Total);
+            return grouped.ToDictionary(g => g.BranchId, g => g.Total);
         }
 
         public async Task<Dictionary<int, int>> GetExpiredMedicineCountByBranchAsync(DateTime endDate)
@@ -81,7 +81,7 @@ namespace PharmacyChainBe.Repositories.Implementations
                 .Select(g => new { BranchId = g.Key, Count = g.Count() })
                 .ToListAsync();
 
-            return grouped.ToDictionary(g => g.BranchId ?? 0, g => g.Count);
+            return grouped.ToDictionary(g => g.BranchId, g => g.Count);
         }
     }
 }
