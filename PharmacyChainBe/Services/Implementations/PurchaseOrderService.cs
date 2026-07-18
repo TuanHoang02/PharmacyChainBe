@@ -151,5 +151,33 @@ namespace PharmacyChainBe.Services.Implementations
                 })
                 .ToList()
         };
+
+        public async Task<PurchaseOrderDetailDto?> UpdateDeliveryStatusAsync(int purchaseOrderId, int supplierId, UpdateDeliveryStatusRequest request)
+        {
+            var po = await _repository.GetByIdAndSupplierForUpdateAsync(purchaseOrderId, supplierId);
+            if (po == null)
+            {
+                throw new ApiException("Không tìm thấy đơn mua.", 404);
+            }
+            if (po.OrderStatus != OrderStatus.Accepted)
+            {
+                throw new ApiException("Đơn mua chưa được chấp nhận hoặc đã hoàn thành/hủy.", 400);
+            }
+            if (po.DeliveryStatus == DeliveryStatus.Received)
+            {
+                throw new ApiException("Không thể cập nhật trạng thái đơn mua đã nhận hàng.", 400);
+            }
+
+            po.DeliveryStatus = request.DeliveryStatus;
+            po.SupplierResponseNote = request.SupplierResponseNote?.Trim();
+            
+            if (request.DeliveryStatus == DeliveryStatus.Delivered)
+            {
+                po.DeliveredAt = DateTime.UtcNow;
+            }
+
+            await _repository.UpdateAsync(po);
+            return MapToDetail(po);
+        }
     }
 }
