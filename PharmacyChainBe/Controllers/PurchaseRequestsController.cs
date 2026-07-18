@@ -65,7 +65,7 @@ namespace PharmacyChainBe.Controllers
         {
             try
             {
-                var userIdString = User.FindFirstValue("userId");
+                var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (!int.TryParse(userIdString, out int userId))
                 {
                     return Unauthorized(new BaseApiResponse<object> { Success = false, Message = "Invalid user token." });
