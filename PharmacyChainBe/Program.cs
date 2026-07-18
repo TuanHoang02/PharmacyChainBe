@@ -46,6 +46,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
+builder.Services.AddScoped<IPurchaseRequestRepository, PurchaseRequestRepository>();
 
 // Add DI for Services
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -53,6 +54,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
 builder.Services.AddScoped<IBranchDashboardService, BranchDashboardService>();
 builder.Services.AddScoped<IBranchReportService, BranchReportService>();
+builder.Services.AddScoped<IPurchaseRequestService, PurchaseRequestService>();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
