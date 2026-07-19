@@ -21,6 +21,9 @@ namespace PharmacyChainBe.Models
         [Required]
         [Column(TypeName = "decimal(18,2)")]
         public decimal SellingPrice { get; set; }
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal ImportPrice { get; set; }
 
         [MaxLength(255)]
         public string? DosageInstructions { get; set; }
