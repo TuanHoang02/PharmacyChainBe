@@ -74,7 +74,7 @@ namespace PharmacyChainBe.Services.Implementations
                 ReviewedByUserName = pr.ReviewedByUser?.FullName,
                 CreatedAt = pr.CreatedAt,
                 ReviewedAt = pr.ReviewedAt,
-                Details = pr.PurchaseRequestDetails.Select(prd => new PurchaseRequestDetailDto
+                Details = pr.PurchaseRequestDetails.Select(prd => new DTOs.Response.PurchaseRequestDetailDto
                 {
                     PurchaseRequestDetailID = prd.PurchaseRequestDetailID,
                     PurchaseRequestID = prd.PurchaseRequestID,
