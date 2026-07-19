@@ -225,5 +225,24 @@ namespace PharmacyChainBe.Repositories.Implementations
 
             return performance;
         }
+
+        public async Task<decimal> GetCostOfGoodsSoldAsync(int? branchId, DateTime startDate, DateTime endDate)
+        {
+            var query = _context.SalesInvoiceDetails
+                .Include(sid => sid.SalesInvoice)
+                .Include(sid => sid.Medicine)
+                .Where(sid => sid.SalesInvoice!.InvoiceStatus == InvoiceStatus.Finalized 
+                           && sid.SalesInvoice.CreatedAt >= startDate 
+                           && sid.SalesInvoice.CreatedAt <= endDate);
+
+            if (branchId.HasValue)
+            {
+                query = query.Where(sid => sid.SalesInvoice!.BranchID == branchId.Value);
+            }
+
+            // COGS = Sum of (Quantity * Medicine.ImportPrice)
+            // Đảm bảo ép kiểu decimal khi tính toán trong Db Query
+            return await query.SumAsync(sid => (decimal)sid.Quantity * (sid.Medicine != null ? sid.Medicine.ImportPrice : 0m));
+        }
     }
 }

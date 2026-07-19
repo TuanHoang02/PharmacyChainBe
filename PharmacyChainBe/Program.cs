@@ -76,7 +76,17 @@ builder.Services.AddScoped<ISupplierService, SupplierService>();
 builder.Services.AddScoped<IStaffService, StaffService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
-// CORS removed
+// Configure CORS
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowAll", policyBuilder =>
+//    {
+//        policyBuilder.AllowAnyOrigin()
+//                     .AllowAnyMethod()
+//                     .AllowAnyHeader();
+//    });
+//});
+
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
@@ -146,7 +156,7 @@ else
 
 app.UseMiddleware<ExceptionMiddleware>();
 
- //app.UseCors("AllowAll");
+//app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
