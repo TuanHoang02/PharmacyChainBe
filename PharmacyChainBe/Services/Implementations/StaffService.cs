@@ -36,6 +36,7 @@ namespace PharmacyChainBe.Services.Implementations
                 if (currentUserRole == "BranchManager" || currentUserRole == "Branch Manager")
                 {
                     branchId = currentUserBranchId; // Bắt buộc lọc theo chi nhánh của Manager
+                    roleId = 4; // BranchManager chỉ được quản lý Pharmacist (Dược sĩ) của chi nhánh mình
                 }
                 else
                 {

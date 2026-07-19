@@ -43,6 +43,11 @@ namespace PharmacyChainBe.Repositories.Implementations
             {
                 query = query.Where(u => u.RoleID == roleId.Value);
             }
+            else
+            {
+                // Chỉ lấy Pharmacist (3) và BranchManager (4) dưới quyền quản lý
+                query = query.Where(u => u.RoleID == 3 || u.RoleID == 4);
+            }
 
             if (isActive.HasValue)
             {

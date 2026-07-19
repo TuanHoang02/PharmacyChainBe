@@ -7,6 +7,7 @@ namespace PharmacyChainBe.Repositories.Interfaces
         Task<decimal> GetTotalRevenueAsync(int? branchId, DateTime startDate, DateTime endDate);
         Task<int> GetSalesCountAsync(int? branchId, DateTime startDate, DateTime endDate);
         Task<decimal> GetTotalPurchaseExpenseAsync(int? branchId, DateTime startDate, DateTime endDate);
+        Task<decimal> GetCostOfGoodsSoldAsync(int? branchId, DateTime startDate, DateTime endDate);
         Task<List<DailyRevenueDto>> GetDailyStatisticsAsync(int? branchId, DateTime startDate, DateTime endDate);
         Task<List<LowStockDto>> GetLowStockMedicinesAsync(int? branchId);
         Task<List<ExpiringBatchDto>> GetExpiringBatchesAsync(int? branchId, int daysThreshold);

@@ -49,6 +49,7 @@ namespace PharmacyChainBe.Services.Implementations
             var totalRevenue = await _dashboardRepository.GetTotalRevenueAsync(branchId, start, end);
             var totalSalesCount = await _dashboardRepository.GetSalesCountAsync(branchId, start, end);
             var totalPurchaseExpense = await _dashboardRepository.GetTotalPurchaseExpenseAsync(branchId, start, end);
+            var cogs = await _dashboardRepository.GetCostOfGoodsSoldAsync(branchId, start, end);
             var dailyStats = await _dashboardRepository.GetDailyStatisticsAsync(branchId, start, end);
             var lowStock = await _dashboardRepository.GetLowStockMedicinesAsync(branchId);
             var expiring = await _dashboardRepository.GetExpiringBatchesAsync(branchId, 30); // 30 ngày tới
@@ -67,7 +68,7 @@ namespace PharmacyChainBe.Services.Implementations
                 TotalRevenue = totalRevenue,
                 TotalSalesCount = totalSalesCount,
                 TotalPurchaseExpense = totalPurchaseExpense,
-                EstimatedProfit = totalRevenue - totalPurchaseExpense,
+                EstimatedProfit = totalRevenue - cogs,
                 DailyRevenue = dailyStats,
                 LowStockMedicines = lowStock,
                 ExpiringBatches = expiring,
