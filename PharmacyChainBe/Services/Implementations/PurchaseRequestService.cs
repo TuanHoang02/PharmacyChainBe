@@ -156,30 +156,40 @@ namespace PharmacyChainBe.Services.Implementations
                     var detailIdsForSupplier = group.Select(ds => ds.PurchaseRequestDetailID).ToList();
                     var matchedDetails = pr.PurchaseRequestDetails.Where(d => detailIdsForSupplier.Contains(d.PurchaseRequestDetailID)).ToList();
 
+                    decimal totalAmount = 0;
+
                     var po = new Models.PurchaseOrder
                     {
-                        PurchaseOrderCode = "PO-" + DateTime.UtcNow.ToString("yyyyMMdd") + "-" + Guid.NewGuid().ToString("N").Substring(0, 4).ToUpper(),
+                        PurchaseOrderCode = "PO-" + DateTime.Now.ToString("yyyyMMdd") + "-" + Guid.NewGuid().ToString("N").Substring(0, 4).ToUpper(),
                         BranchID = pr.BranchID,
                         SupplierID = supplierId,
                         PurchaseRequestID = pr.PurchaseRequestID,
                         CreatedByUserID = reviewerUserId,
                         OrderStatus = OrderStatus.PendingSupplierConfirmation,
                         DeliveryStatus = DeliveryStatus.NotStarted,
-                        CreatedAt = DateTime.UtcNow,
+                        CreatedAt = DateTime.Now,
                         TotalAmount = 0
                     };
 
                     foreach (var detail in matchedDetails)
                     {
+                        var ds = group.First(x => x.PurchaseRequestDetailID == detail.PurchaseRequestDetailID);
+                        var unitPrice = ds.UnitPrice;
+                        var lineTotal = detail.RequestedQuantity * unitPrice;
+
                         po.PurchaseOrderDetails.Add(new Models.PurchaseOrderDetail
                         {
                             MedicineID = detail.MedicineID,
                             OrderedQuantity = detail.RequestedQuantity,
                             ReceivedQuantity = 0,
-                            UnitPrice = 0,
-                            LineTotal = 0
+                            UnitPrice = unitPrice,
+                            LineTotal = lineTotal
                         });
+
+                        totalAmount += lineTotal;
                     }
+
+                    po.TotalAmount = totalAmount;
 
                     await _repository.CreatePurchaseOrderAsync(po);
                 }

@@ -16,5 +16,6 @@ namespace PharmacyChainBe.DTOs.Request
     {
         public int PurchaseRequestDetailID { get; set; }
         public int SupplierID { get; set; }
+        public decimal UnitPrice { get; set; }
     }
 }
