@@ -8,5 +8,7 @@ namespace PharmacyChainBe.Repositories.Interfaces
     {
         Task<PagedResponse<List<SalesInvoice>>> GetPagedAsync(SalesHistoryQuery query, CancellationToken cancellationToken = default);
         Task<SalesInvoice?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<SalesInvoice> CreateSalesInvoiceAsync(SalesInvoice invoice);
+        Task<Medicine?> GetMedicineByIdAsync(int medicineId);
     }
 }
