@@ -44,6 +44,7 @@ namespace PharmacyChainBe.Services.Implementations
 
         public async Task<UserResponse> CreateUserAsync(UserRequest request)
         {
+            await ValidateRoleNotSupplierAsync(request.RoleId);
             await ValidateDuplicateAsync(request.Username, request.Email, request.PhoneNumber);
 
             if (string.IsNullOrEmpty(request.Password))
@@ -80,6 +81,7 @@ namespace PharmacyChainBe.Services.Implementations
                 throw new ApiException("Không tìm thấy người dùng.", 404);
             }
 
+            await ValidateRoleNotSupplierAsync(request.RoleId);
             await ValidateDuplicateAsync(request.Username, request.Email, request.PhoneNumber, id);
 
             existingUser.FullName = request.FullName;
@@ -113,6 +115,16 @@ namespace PharmacyChainBe.Services.Implementations
             await _userRepository.UpdateAsync(existingUser);
 
             return true;
+        }
+
+        private async Task ValidateRoleNotSupplierAsync(int roleId)
+        {
+            var roles = await _userRepository.GetRolesAsync();
+            var role = roles.FirstOrDefault(r => r.RoleID == roleId);
+            if (role != null && role.RoleName == "Supplier")
+            {
+                throw new ApiException("Không được phép tạo hoặc cập nhật tài khoản cho nhà cung cấp (Supplier) từ chức năng này.", 403);
+            }
         }
 
         private async Task ValidateDuplicateAsync(string username, string? email, string? phone, int? currentUserId = null)
@@ -160,7 +172,9 @@ namespace PharmacyChainBe.Services.Implementations
         public async Task<IEnumerable<LookupDto>> GetRolesAsync()
         {
             var roles = await _userRepository.GetRolesAsync();
-            return roles.Select(r => new LookupDto { Id = r.RoleID, Name = r.RoleName });
+            return roles
+                .Where(r => r.RoleName != "Supplier")
+                .Select(r => new LookupDto { Id = r.RoleID, Name = r.RoleName });
         }
 
         public async Task<IEnumerable<LookupDto>> GetBranchesAsync()
