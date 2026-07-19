@@ -42,6 +42,8 @@ namespace PharmacyChainBe.Repositories.Implementations
             return await _context.PurchaseRequests
                 .Include(pr => pr.PurchaseRequestDetails)
                     .ThenInclude(prd => prd.Medicine)
+                .Include(pr => pr.PurchaseOrders)
+                    .ThenInclude(po => po.Supplier)
                 .Where(pr => pr.BranchID == branchId)
                 .OrderByDescending(pr => pr.CreatedAt)
                 .ToListAsync();
@@ -72,6 +74,22 @@ namespace PharmacyChainBe.Repositories.Implementations
         {
             _context.MedicineBatches.AddRange(batches);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<PurchaseOrder?> GetPurchaseOrderByIdAsync(int purchaseOrderId)
+        {
+            return await _context.PurchaseOrders
+                .Include(po => po.PurchaseRequest)
+                .Include(po => po.PurchaseOrderDetails)
+                    .ThenInclude(pod => pod.Medicine)
+                .FirstOrDefaultAsync(po => po.PurchaseOrderID == purchaseOrderId);
+        }
+
+        public async Task<IEnumerable<PurchaseOrder>> GetPurchaseOrdersByRequestIdAsync(int purchaseRequestId)
+        {
+            return await _context.PurchaseOrders
+                .Where(po => po.PurchaseRequestID == purchaseRequestId)
+                .ToListAsync();
         }
     }
 }

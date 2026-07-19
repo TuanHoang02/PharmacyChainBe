@@ -11,5 +11,7 @@ namespace PharmacyChainBe.Repositories.Interfaces
         Task<IEnumerable<MedicineBatch>> GetBatchesForPurchaseRequestAsync(int purchaseRequestId);
         Task UpdatePurchaseRequestAsync(PurchaseRequest request);
         Task AddMedicineBatchesAsync(IEnumerable<MedicineBatch> batches);
+        Task<PurchaseOrder?> GetPurchaseOrderByIdAsync(int purchaseOrderId);
+        Task<IEnumerable<PurchaseOrder>> GetPurchaseOrdersByRequestIdAsync(int purchaseRequestId);
     }
 }

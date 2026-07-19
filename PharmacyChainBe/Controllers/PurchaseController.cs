@@ -63,11 +63,11 @@ namespace PharmacyChainBe.Controllers
                 Message = "Yêu cầu nhập hàng đã được tạo thành công." 
             });
         }
-        [HttpPost("{id}/receive")]
-        public async Task<IActionResult> ReceiveMedicines(int id)
+        [HttpPost("order/{id}/receive")]
+        public async Task<IActionResult> ReceivePurchaseOrder(int id, [FromBody] ReceiveMedicinesDto request)
         {
             var claims = GetUserClaims();
-            await _purchaseService.ReceiveMedicinesAsync(claims.BranchId, id);
+            await _purchaseService.ReceivePurchaseOrderAsync(claims.BranchId, id, request);
 
             return Ok(new BaseApiResponse<object> 
             { 
