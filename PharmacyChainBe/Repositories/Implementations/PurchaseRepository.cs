@@ -37,16 +37,30 @@ namespace PharmacyChainBe.Repositories.Implementations
                 .FirstOrDefaultAsync(pr => pr.PurchaseRequestID == id);
         }
 
-        public async Task<IEnumerable<PurchaseRequest>> GetPurchaseRequestsByBranchAsync(int branchId)
+        public async Task<(IEnumerable<PurchaseRequest> Data, int TotalRecords)> GetPagedPurchaseRequestsByBranchAsync(int branchId, int pageNumber, int pageSize)
         {
-            return await _context.PurchaseRequests
+            var query = _context.PurchaseRequests
+                .Where(pr => pr.BranchID == branchId)
                 .Include(pr => pr.PurchaseRequestDetails)
                     .ThenInclude(prd => prd.Medicine)
                 .Include(pr => pr.PurchaseOrders)
                     .ThenInclude(po => po.Supplier)
+                .Include(pr => pr.PurchaseOrders)
+                    .ThenInclude(po => po.PurchaseOrderDetails)
+                        .ThenInclude(pod => pod.Medicine)
+                .Include(pr => pr.PurchaseOrders)
+                    .ThenInclude(po => po.PurchaseOrderDetails)
+                        .ThenInclude(pod => pod.MedicineBatches)
                 .Where(pr => pr.BranchID == branchId)
-                .OrderByDescending(pr => pr.CreatedAt)
+                .OrderByDescending(pr => pr.CreatedAt);
+
+            var totalRecords = await query.CountAsync();
+            var data = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+            
+            return (data, totalRecords);
         }
 
         public async Task<IEnumerable<MedicineBatch>> GetBatchesForPurchaseRequestAsync(int purchaseRequestId)
@@ -90,6 +104,20 @@ namespace PharmacyChainBe.Repositories.Implementations
             return await _context.PurchaseOrders
                 .Where(po => po.PurchaseRequestID == purchaseRequestId)
                 .ToListAsync();
+        }
+
+        public async Task UpdatePurchaseOrderAsync(PurchaseOrder purchaseOrder)
+        {
+            _context.PurchaseOrders.Update(purchaseOrder);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<MedicineBatch?> GetMedicineBatchByIdAsync(int medicineBatchId)
+        {
+            return await _context.MedicineBatches
+                .Include(mb => mb.PurchaseOrderDetail)
+                    .ThenInclude(pod => pod!.Medicine)
+                .FirstOrDefaultAsync(mb => mb.MedicineBatchID == medicineBatchId);
         }
     }
 }

@@ -18,10 +18,11 @@ namespace PharmacyChainBe.Services.Implementations
             _inventoryRepository = inventoryRepository;
         }
 
-        public async Task<IEnumerable<DTOs.Response.PurchaseRequestResponseDto>> GetPurchaseRequestsAsync(int branchId)
+        public async Task<DTOs.PagedResponse<IEnumerable<DTOs.Response.PurchaseRequestResponseDto>>> GetPurchaseRequestsAsync(int branchId, int pageNumber, int pageSize)
         {
-            var requests = await _purchaseRepository.GetPurchaseRequestsByBranchAsync(branchId);
-            return requests.Select(pr => new DTOs.Response.PurchaseRequestResponseDto
+            var pagedResult = await _purchaseRepository.GetPagedPurchaseRequestsByBranchAsync(branchId, pageNumber, pageSize);
+            
+            var requestsDto = pagedResult.Data.Select(pr => new DTOs.Response.PurchaseRequestResponseDto
             {
                 PurchaseRequestId = pr.PurchaseRequestID,
                 RequestCode = pr.RequestCode,
@@ -52,10 +53,26 @@ namespace PharmacyChainBe.Services.Implementations
                         MedicineId = pod.MedicineID,
                         MedicineName = pod.Medicine?.MedicineName ?? "Unknown",
                         OrderedQuantity = pod.OrderedQuantity,
-                        ReceivedQuantity = pod.ReceivedQuantity
+                        ReceivedQuantity = pod.ReceivedQuantity,
+                        Batches = pod.MedicineBatches.Select(mb => new DTOs.Response.PreDeclaredBatchDto
+                        {
+                            MedicineBatchId = mb.MedicineBatchID,
+                            BatchNumber = mb.BatchNumber,
+                            DeclaredQuantity = mb.ReceivedQuantity, // Currently using ReceivedQuantity to store declared size
+                            ManufacturingDate = mb.ManufacturingDate,
+                            ExpirationDate = mb.ExpiryDate
+                        }).ToList()
                     }).ToList()
                 }).ToList()
             });
+
+            return new DTOs.PagedResponse<IEnumerable<DTOs.Response.PurchaseRequestResponseDto>>
+            {
+                Data = requestsDto,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalRecords = pagedResult.TotalRecords
+            };
         }
 
         public async Task CreatePurchaseRequestAsync(int branchId, int userId, CreatePurchaseRequestDto request)
@@ -128,49 +145,52 @@ namespace PharmacyChainBe.Services.Implementations
                 throw new ApiException("No medicines provided to receive.", 400);
             }
 
-            var batches = new List<MedicineBatch>();
             foreach (var detail in request.Details)
             {
-                var pod = purchaseOrder.PurchaseOrderDetails.FirstOrDefault(p => p.MedicineID == detail.MedicineId);
-                if (pod == null)
+                if (detail.ReceivedBatches == null || !detail.ReceivedBatches.Any())
                 {
-                    throw new ApiException($"Medicine ID {detail.MedicineId} is not in this purchase order.", 400);
+                    continue; // Skip if no batches for this medicine
                 }
 
-                if (detail.ReceivedQuantity <= 0)
+                foreach (var batchRequest in detail.ReceivedBatches)
                 {
-                    throw new ApiException("Received quantity must be greater than zero.", 400);
+                    if (batchRequest.ReceivedQuantity <= 0)
+                    {
+                        throw new ApiException("Received quantity must be greater than zero.", 400);
+                    }
+
+                var batch = await _purchaseRepository.GetMedicineBatchByIdAsync(batchRequest.MedicineBatchId);
+                if (batch == null || batch.PurchaseOrderDetail == null || batch.PurchaseOrderDetail.PurchaseOrderID != purchaseOrderId)
+                {
+                    throw new ApiException($"Medicine Batch ID {batchRequest.MedicineBatchId} is invalid or not in this purchase order.", 400);
                 }
 
-                // Update ImportPrice
-                if (pod.Medicine != null)
+                var pod = batch.PurchaseOrderDetail;
+
+                // Update ImportPrice on first batch processing for this medicine
+                if (pod.Medicine != null && pod.ReceivedQuantity == 0)
                 {
                     pod.Medicine.ImportPrice = pod.UnitPrice;
                 }
                 
-                pod.ReceivedQuantity += detail.ReceivedQuantity;
+                pod.ReceivedQuantity += batchRequest.ReceivedQuantity;
 
-                var batch = new MedicineBatch
-                {
-                    BatchNumber = detail.BatchNumber,
-                    MedicineID = detail.MedicineId,
-                    BranchID = branchId,
-                    SupplierID = purchaseOrder.SupplierID,
-                    PurchaseOrderDetailID = pod.PurchaseOrderDetailID,
-                    ManufacturingDate = detail.ManufacturingDate,
-                    ExpiryDate = detail.ExpirationDate,
-                    ReceivedQuantity = detail.ReceivedQuantity,
-                    RemainingQuantity = detail.ReceivedQuantity,
-                    CreatedAt = DateTime.UtcNow
-                };
-                batches.Add(batch);
+                // Cập nhật lô hàng đã khai báo
+                batch.ReceivedQuantity = batchRequest.ReceivedQuantity; // Override with ACTUAL received
+                batch.RemainingQuantity = batchRequest.ReceivedQuantity;
 
-                await _inventoryRepository.AddStockAsync(branchId, detail.MedicineId, detail.ReceivedQuantity);
+                await _inventoryRepository.AddStockAsync(branchId, pod.MedicineID, batchRequest.ReceivedQuantity);
+                } // End inner foreach
+            } // End outer foreach
+
+            bool isFullyReceived = purchaseOrder.PurchaseOrderDetails.All(pod => pod.ReceivedQuantity >= pod.OrderedQuantity);
+            
+            if (isFullyReceived)
+            {
+                purchaseOrder.DeliveryStatus = DeliveryStatus.Received;
             }
-
-            await _purchaseRepository.AddMedicineBatchesAsync(batches);
-
-            purchaseOrder.DeliveryStatus = DeliveryStatus.Received;
+            
+            await _purchaseRepository.UpdatePurchaseOrderAsync(purchaseOrder);
             
             // Check if all POs in PR are received
             if (purchaseOrder.PurchaseRequestID.HasValue)

@@ -14,20 +14,16 @@ namespace PharmacyChainBe.DTOs.Request
         public int MedicineId { get; set; }
 
         [Required]
+        public List<ReceiveMedicineBatchDto> ReceivedBatches { get; set; } = new List<ReceiveMedicineBatchDto>();
+    }
+
+    public class ReceiveMedicineBatchDto
+    {
+        [Required]
+        public int MedicineBatchId { get; set; }
+
+        [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Received quantity must be greater than zero.")]
         public int ReceivedQuantity { get; set; }
-
-        [Required]
-        [MaxLength(50)]
-        public string BatchNumber { get; set; } = string.Empty;
-
-        [Required]
-        public DateTime ExpirationDate { get; set; }
-
-        [Required]
-        public DateTime ManufacturingDate { get; set; }
-
-        [Required]
-        public int SupplierId { get; set; }
     }
 }

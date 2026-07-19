@@ -32,6 +32,16 @@ namespace PharmacyChainBe.DTOs.Response
         public string MedicineName { get; set; } = string.Empty;
         public int OrderedQuantity { get; set; }
         public int ReceivedQuantity { get; set; }
+        public List<PreDeclaredBatchDto> Batches { get; set; } = new List<PreDeclaredBatchDto>();
+    }
+
+    public class PreDeclaredBatchDto
+    {
+        public int MedicineBatchId { get; set; }
+        public string BatchNumber { get; set; } = string.Empty;
+        public int DeclaredQuantity { get; set; }
+        public DateTime ManufacturingDate { get; set; }
+        public DateTime ExpirationDate { get; set; }
     }
 
     public class PurchaseRequestDetailResponseDto

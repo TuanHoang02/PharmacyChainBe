@@ -4,7 +4,7 @@ namespace PharmacyChainBe.Services.Interfaces
 {
     public interface IPurchaseService
     {
-        Task<IEnumerable<DTOs.Response.PurchaseRequestResponseDto>> GetPurchaseRequestsAsync(int branchId);
+        Task<DTOs.PagedResponse<IEnumerable<DTOs.Response.PurchaseRequestResponseDto>>> GetPurchaseRequestsAsync(int branchId, int pageNumber, int pageSize);
         Task CreatePurchaseRequestAsync(int branchId, int userId, CreatePurchaseRequestDto request);
         Task ReceivePurchaseOrderAsync(int branchId, int purchaseOrderId, ReceiveMedicinesDto request);
     }
