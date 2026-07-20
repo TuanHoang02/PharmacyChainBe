@@ -100,12 +100,12 @@ namespace PharmacyChainBe.Services.Implementations
                     throw new ApiException("Requested quantity must be greater than zero.", 400); // AT1 / BR-04
                 }
 
-                // Check AT2 - Duplicate pending request
-                bool hasPending = await _purchaseRepository.HasPendingPurchaseRequestForMedicineAsync(branchId, detail.MedicineId);
-                if (hasPending)
-                {
-                    throw new ApiException($"A pending purchase request already exists for medicine ID {detail.MedicineId}.", 400);
-                }
+                // Check AT2 - Duplicate pending request (Removed condition as requested)
+                // bool hasPending = await _purchaseRepository.HasPendingPurchaseRequestForMedicineAsync(branchId, detail.MedicineId);
+                // if (hasPending)
+                // {
+                //     throw new ApiException($"A pending purchase request already exists for medicine ID {detail.MedicineId}.", 400);
+                // }
 
                 var inventory = await _inventoryRepository.GetInventoryAsync(branchId, detail.MedicineId);
                 int currentStock = inventory?.QuantityInStock ?? 0;
