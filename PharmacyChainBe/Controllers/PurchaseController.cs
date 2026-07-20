@@ -38,12 +38,12 @@ namespace PharmacyChainBe.Controllers
         }
 
         [HttpGet("requests")]
-        public async Task<IActionResult> GetPurchaseRequests()
+        public async Task<IActionResult> GetPurchaseRequests([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var claims = GetUserClaims();
-            var requests = await _purchaseService.GetPurchaseRequestsAsync(claims.BranchId);
+            var requests = await _purchaseService.GetPurchaseRequestsAsync(claims.BranchId, pageNumber, pageSize);
 
-            return Ok(new BaseApiResponse<IEnumerable<DTOs.Response.PurchaseRequestResponseDto>>
+            return Ok(new BaseApiResponse<DTOs.PagedResponse<IEnumerable<DTOs.Response.PurchaseRequestResponseDto>>>
             {
                 Success = true,
                 Message = "Lấy danh sách yêu cầu nhập hàng thành công.",
@@ -63,11 +63,11 @@ namespace PharmacyChainBe.Controllers
                 Message = "Yêu cầu nhập hàng đã được tạo thành công." 
             });
         }
-        [HttpPost("{id}/receive")]
-        public async Task<IActionResult> ReceiveMedicines(int id)
+        [HttpPost("order/{id}/receive")]
+        public async Task<IActionResult> ReceivePurchaseOrder(int id, [FromBody] ReceiveMedicinesDto request)
         {
             var claims = GetUserClaims();
-            await _purchaseService.ReceiveMedicinesAsync(claims.BranchId, id);
+            await _purchaseService.ReceivePurchaseOrderAsync(claims.BranchId, id, request);
 
             return Ok(new BaseApiResponse<object> 
             { 

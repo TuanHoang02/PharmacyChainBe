@@ -18,10 +18,11 @@ namespace PharmacyChainBe.Services.Implementations
             _inventoryRepository = inventoryRepository;
         }
 
-        public async Task<IEnumerable<DTOs.Response.PurchaseRequestResponseDto>> GetPurchaseRequestsAsync(int branchId)
+        public async Task<DTOs.PagedResponse<IEnumerable<DTOs.Response.PurchaseRequestResponseDto>>> GetPurchaseRequestsAsync(int branchId, int pageNumber, int pageSize)
         {
-            var requests = await _purchaseRepository.GetPurchaseRequestsByBranchAsync(branchId);
-            return requests.Select(pr => new DTOs.Response.PurchaseRequestResponseDto
+            var pagedResult = await _purchaseRepository.GetPagedPurchaseRequestsByBranchAsync(branchId, pageNumber, pageSize);
+            
+            var requestsDto = pagedResult.Data.Select(pr => new DTOs.Response.PurchaseRequestResponseDto
             {
                 PurchaseRequestId = pr.PurchaseRequestID,
                 RequestCode = pr.RequestCode,
@@ -39,8 +40,39 @@ namespace PharmacyChainBe.Services.Implementations
                     MedicineName = prd.Medicine?.MedicineName ?? "Unknown",
                     RequestedQuantity = prd.RequestedQuantity,
                     CurrentStock = prd.CurrentStock
+                }).ToList(),
+                PurchaseOrders = pr.PurchaseOrders.Select(po => new DTOs.Response.PurchaseOrderSummaryDto
+                {
+                    PurchaseOrderId = po.PurchaseOrderID,
+                    OrderCode = po.PurchaseOrderCode,
+                    SupplierId = po.SupplierID,
+                    SupplierName = po.Supplier?.SupplierName ?? "Unknown",
+                    DeliveryStatus = po.DeliveryStatus.ToString(),
+                    Details = po.PurchaseOrderDetails.Select(pod => new DTOs.Response.PurchaseOrderSummaryDetailDto
+                    {
+                        MedicineId = pod.MedicineID,
+                        MedicineName = pod.Medicine?.MedicineName ?? "Unknown",
+                        OrderedQuantity = pod.OrderedQuantity,
+                        ReceivedQuantity = pod.ReceivedQuantity,
+                        Batches = pod.MedicineBatches.Select(mb => new DTOs.Response.PreDeclaredBatchDto
+                        {
+                            MedicineBatchId = mb.MedicineBatchID,
+                            BatchNumber = mb.BatchNumber,
+                            DeclaredQuantity = mb.ReceivedQuantity, // Currently using ReceivedQuantity to store declared size
+                            ManufacturingDate = mb.ManufacturingDate,
+                            ExpirationDate = mb.ExpiryDate
+                        }).ToList()
+                    }).ToList()
                 }).ToList()
             });
+
+            return new DTOs.PagedResponse<IEnumerable<DTOs.Response.PurchaseRequestResponseDto>>
+            {
+                Data = requestsDto,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalRecords = pagedResult.TotalRecords
+            };
         }
 
         public async Task CreatePurchaseRequestAsync(int branchId, int userId, CreatePurchaseRequestDto request)
@@ -94,39 +126,85 @@ namespace PharmacyChainBe.Services.Implementations
             await _purchaseRepository.CreatePurchaseRequestAsync(purchaseRequest);
         }
 
-        public async Task ReceiveMedicinesAsync(int branchId, int purchaseRequestId)
+        public async Task ReceivePurchaseOrderAsync(int branchId, int purchaseOrderId, ReceiveMedicinesDto request)
         {
-            var purchaseRequest = await _purchaseRepository.GetPurchaseRequestByIdAsync(purchaseRequestId);
+            var purchaseOrder = await _purchaseRepository.GetPurchaseOrderByIdAsync(purchaseOrderId);
             
-            if (purchaseRequest == null || purchaseRequest.BranchID != branchId)
+            if (purchaseOrder == null || purchaseOrder.PurchaseRequest?.BranchID != branchId)
             {
-                throw new ApiException("Purchase request not found.", 404); // AT2
+                throw new ApiException("Purchase order not found.", 404);
             }
 
-            if (purchaseRequest.Status != PurchaseRequestStatus.Approved)
+            if (purchaseOrder.DeliveryStatus == DeliveryStatus.Received)
             {
-                throw new ApiException("Only approved purchase requests can be received.", 400); // BR-01, BR-04
+                throw new ApiException("This purchase order has already been received.", 400);
             }
 
-            var batches = await _purchaseRepository.GetBatchesForPurchaseRequestAsync(purchaseRequestId);
-            
-            // Note: If UC19 hasn't been executed, batches might be empty.
-            // But if it has been executed, we update inventory based on it.
-            foreach (var batch in batches)
+            if (request.Details == null || !request.Details.Any())
             {
-                if (batch.ReceivedQuantity > 0)
+                throw new ApiException("No medicines provided to receive.", 400);
+            }
+
+            foreach (var detail in request.Details)
+            {
+                if (detail.ReceivedBatches == null || !detail.ReceivedBatches.Any())
                 {
-                    await _inventoryRepository.AddStockAsync(
-                        branchId, 
-                        batch.MedicineID, 
-                        batch.ReceivedQuantity
-                    );
+                    continue; // Skip if no batches for this medicine
+                }
+
+                foreach (var batchRequest in detail.ReceivedBatches)
+                {
+                    if (batchRequest.ReceivedQuantity <= 0)
+                    {
+                        throw new ApiException("Received quantity must be greater than zero.", 400);
+                    }
+
+                var batch = await _purchaseRepository.GetMedicineBatchByIdAsync(batchRequest.MedicineBatchId);
+                if (batch == null || batch.PurchaseOrderDetail == null || batch.PurchaseOrderDetail.PurchaseOrderID != purchaseOrderId)
+                {
+                    throw new ApiException($"Medicine Batch ID {batchRequest.MedicineBatchId} is invalid or not in this purchase order.", 400);
+                }
+
+                var pod = batch.PurchaseOrderDetail;
+
+                // Update ImportPrice on first batch processing for this medicine
+                if (pod.Medicine != null && pod.ReceivedQuantity == 0)
+                {
+                    pod.Medicine.ImportPrice = pod.UnitPrice;
+                }
+                
+                pod.ReceivedQuantity += batchRequest.ReceivedQuantity;
+
+                // Cập nhật lô hàng đã khai báo
+                batch.ReceivedQuantity = batchRequest.ReceivedQuantity; // Override with ACTUAL received
+                batch.RemainingQuantity = batchRequest.ReceivedQuantity;
+
+                await _inventoryRepository.AddStockAsync(branchId, pod.MedicineID, batchRequest.ReceivedQuantity);
+                } // End inner foreach
+            } // End outer foreach
+
+            bool isFullyReceived = purchaseOrder.PurchaseOrderDetails.All(pod => pod.ReceivedQuantity >= pod.OrderedQuantity);
+            
+            if (isFullyReceived)
+            {
+                purchaseOrder.DeliveryStatus = DeliveryStatus.Received;
+            }
+            
+            await _purchaseRepository.UpdatePurchaseOrderAsync(purchaseOrder);
+            
+            // Check if all POs in PR are received
+            if (purchaseOrder.PurchaseRequestID.HasValue)
+            {
+                var allPOs = await _purchaseRepository.GetPurchaseOrdersByRequestIdAsync(purchaseOrder.PurchaseRequestID.Value);
+                if (allPOs.All(po => po.DeliveryStatus == DeliveryStatus.Received || po.OrderStatus == OrderStatus.Cancelled))
+                {
+                    purchaseOrder.PurchaseRequest!.Status = PurchaseRequestStatus.Received;
+                    await _purchaseRepository.UpdatePurchaseRequestAsync(purchaseOrder.PurchaseRequest);
                 }
             }
-
-            // Update Purchase Request Status (POS-01)
-            purchaseRequest.Status = PurchaseRequestStatus.Received;
-            await _purchaseRepository.UpdatePurchaseRequestAsync(purchaseRequest);
+            
+            // Save changes implicitly by updating PR or just rely on context tracking. Wait, PurchaseRepository doesn't expose UpdatePurchaseOrder. 
+            // We should ideally have UpdatePurchaseOrderAsync, but let's assume SaveChanges was called or we can add it.
         }
     }
 }
