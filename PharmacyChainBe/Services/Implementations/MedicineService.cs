@@ -96,6 +96,7 @@ namespace PharmacyChainBe.Services.Implementations
                 GenericName = request.GenericName,
                 CategoryID = request.CategoryID,
                 SellingPrice = request.SellingPrice,
+                ImportPrice = 0,
                 Unit = request.Unit,
                 DosageInstructions = request.DosageInstructions,
                 RequiresPrescription = request.RequiresPrescription,
