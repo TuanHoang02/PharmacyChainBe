@@ -54,7 +54,7 @@ namespace PharmacyChainBe.Middleware
             {
                 Success = false,
                 Message = message,
-                Data = env.IsDevelopment() ? exception.StackTrace : null
+                Data = null
             };
 
             var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };

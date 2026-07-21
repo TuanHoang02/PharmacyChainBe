@@ -50,7 +50,7 @@ namespace PharmacyChainBe.Services.Implementations
 
             if (!isPasswordValid)
             {
-                throw new ApiException("Email hoặc mật khẩu không chính xác.", 401);
+                throw new ApiException("Mật khẩu không chính xác.", 401);
             }
 
             var token = GenerateJwtToken(user);
